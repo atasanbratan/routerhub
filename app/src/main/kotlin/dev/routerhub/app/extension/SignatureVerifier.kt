@@ -16,6 +16,9 @@ enum class TrustLevel {
 
     /** Unknown key the user explicitly chose to trust for this exact package version. */
     USER_TRUSTED,
+
+    /** Compiled into this build of the app (the Play build); there is no APK to check. */
+    BUILT_IN,
 }
 
 sealed interface SignatureVerdict {

@@ -106,7 +106,8 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
                     Toast.makeText(context, "Debug information copied", Toast.LENGTH_SHORT).show()
                 },
             )
-            AboutItem(
+            // Play delivers its own updates, like Mihon's non-GitHub builds.
+            if (BuildConfig.UPDATE_CHECKER) AboutItem(
                 title = "Check for updates",
                 trailing = {
                     AnimatedVisibility(checking) { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp) }
@@ -234,7 +235,9 @@ private fun versionLabel(): String =
     if (BuildConfig.DEBUG) "Debug ${BuildConfig.VERSION_NAME}" else "Stable v${BuildConfig.VERSION_NAME}"
 
 private fun debugInfo(): String = buildString {
-    appendLine("App version: ${BuildConfig.VERSION_NAME} (${BuildConfig.BUILD_TYPE}, ${BuildConfig.VERSION_CODE})")
+    appendLine(
+        "App version: ${BuildConfig.VERSION_NAME} (${BuildConfig.FLAVOR} ${BuildConfig.BUILD_TYPE}, ${BuildConfig.VERSION_CODE})",
+    )
     appendLine("Extension API: v${ExtensionContract.MIN_SUPPORTED_API_VERSION}–v${ExtensionContract.API_VERSION}")
     appendLine("Android version: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
     append("Device: ${Build.MANUFACTURER} ${Build.MODEL}")

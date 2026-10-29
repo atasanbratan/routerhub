@@ -165,6 +165,7 @@ private fun statusLine(state: ExtensionState): String = when (state) {
         TrustLevel.OFFICIAL -> "Official"
         TrustLevel.DEVELOPMENT -> "Development build"
         TrustLevel.USER_TRUSTED -> "Trusted by you"
+        TrustLevel.BUILT_IN -> "Built in"
     }
     is ExtensionState.Untrusted -> "Untrusted: unknown signer"
     is ExtensionState.Incompatible -> state.reason

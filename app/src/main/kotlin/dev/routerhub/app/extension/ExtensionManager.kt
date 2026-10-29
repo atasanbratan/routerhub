@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
+import dev.routerhub.api.ExtensionContract
 import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.app.BuildConfig
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +50,12 @@ class ExtensionManager(
     private val rescanRequests = Channel<Unit>(Channel.CONFLATED)
 
     fun start() {
+        if (!BuildConfig.INSTALLABLE_EXTENSIONS) {
+            // Play build: only the built-in extensions, and no package scanning at all.
+            _extensions.value = bundled()
+            _ready.value = true
+            return
+        }
         scope.launch(Dispatchers.IO) {
             for (request in rescanRequests) {
                 _extensions.value = discovery.findInstalled()
@@ -60,6 +67,22 @@ class ExtensionManager(
         registerPackageReceiver()
         rescan()
     }
+
+    private fun bundled(): List<ExtensionState> = bundledExtensions.map { bundle ->
+        val info = ExtensionInfo(
+            packageName = bundle.packageName,
+            label = bundle.label,
+            versionName = BuildConfig.VERSION_NAME,
+            versionCode = BuildConfig.VERSION_CODE.toLong(),
+            apiVersion = ExtensionContract.API_VERSION,
+            signerSha256 = emptyList(),
+        )
+        try {
+            ExtensionState.Loaded(info, TrustLevel.BUILT_IN, bundle.create().factories, context)
+        } catch (e: Exception) {
+            ExtensionState.Failed(info, e)
+        }
+    }.sortedBy { it.info.label.lowercase() }
 
     fun rescan() {
         rescanRequests.trySend(Unit)

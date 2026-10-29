@@ -1,6 +1,7 @@
 package dev.routerhub.app.extension
 
 import android.content.Context
+import dev.routerhub.api.RouterExtension
 import dev.routerhub.api.RouterFirmwareFactory
 
 data class ExtensionInfo(
@@ -11,6 +12,16 @@ data class ExtensionInfo(
     val apiVersion: Int,
     /** SHA-256 of each certificate that signed the installed APK, lower-case hex. */
     val signerSha256: List<String>,
+)
+
+/**
+ * An extension compiled into the app instead of installed as an APK, as in the Play build, where
+ * discovering and loading APKs isn't allowed. [create] runs once, when the extension list is built.
+ */
+class BundledExtension(
+    val packageName: String,
+    val label: String,
+    val create: () -> RouterExtension,
 )
 
 /** Outcome of inspecting one installed extension package. */

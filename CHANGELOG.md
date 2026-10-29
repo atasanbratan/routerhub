@@ -21,6 +21,7 @@ Add them under **Unreleased** as you go; releasing renames that heading to the n
 - An About screen: version (tap to copy debug information), check for updates, what's new, open source
   licenses, privacy policy, and links to the website and GitHub.
 - Extensions from the official RouterHub extensions repository are recognised as **Official**.
+- A Google Play edition with the official extensions built in.
 
 [Unreleased]: https://github.com/atasanbratan/routerhub/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/atasanbratan/routerhub/releases/tag/v0.1.0

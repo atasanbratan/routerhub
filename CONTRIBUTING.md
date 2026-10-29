@@ -28,7 +28,7 @@ You need JDK 17 or newer and the Android SDK (platform 36 and build-tools 36). A
 ```bash
 git clone https://github.com/<you>/routerhub.git
 cd routerhub
-./gradlew :router-api:test :app:assembleDebug
+./gradlew :router-api:test :app:assembleGithubDebug
 ```
 
 If Gradle cannot find the SDK, create `local.properties` with `sdk.dir=/path/to/Android/Sdk` (Android Studio
@@ -68,7 +68,7 @@ Style is the official Kotlin style. Comments should explain *why*, not restate t
 
 1. Fork the repository and create a branch from `main`.
 2. Make the change, with tests where it makes sense.
-3. Run `./gradlew :router-api:test :app:assembleDebug`. CI runs the same.
+3. Run `./gradlew :router-api:test :app:assembleGithubDebug`. CI runs the same.
 4. Open a pull request and fill in the template. Keep it focused: one change per pull request.
 5. Be patient and kind. This is a volunteer project, and reviews can take a few days.
 

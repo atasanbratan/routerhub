@@ -13,6 +13,13 @@ val officialSigners: String = providers.gradleProperty("routerhub.officialSigner
 // them a release build is left unsigned, so a local `assembleRelease` still works for testing R8.
 val releaseKeyStore: String? = providers.environmentVariable("ROUTERHUB_KEYSTORE").orNull
 
+// The Play build compiles the official extensions in, because Google Play allows neither the
+// all-packages permission extension discovery needs nor loading code from APKs installed elsewhere.
+// It reads their sources from a checkout of routerhub-extensions, by default next to this repository.
+val extensionsCheckout: File =
+    rootProject.file(providers.gradleProperty("routerhub.extensions").getOrElse("../routerhub-extensions"))
+val bundledExtensions = listOf("demo", "openwrt-ssh", "tenda-ac", "tplink-adsl")
+
 android {
     namespace = "dev.routerhub.app"
     compileSdk = 36
@@ -27,6 +34,27 @@ android {
         // Where the About screen looks for updates and links to; forks change it here.
         buildConfigField("String", "GITHUB_REPO", "\"atasanbratan/routerhub\"")
         buildConfigField("String", "WEBSITE_URL", "\"https://atasanbratan.github.io/routerhub\"")
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        // GitHub releases and the website: extensions are separate APKs, updates come from GitHub.
+        create("github") {
+            dimension = "distribution"
+            isDefault = true
+            buildConfigField("boolean", "INSTALLABLE_EXTENSIONS", "true")
+            buildConfigField("boolean", "UPDATE_CHECKER", "true")
+        }
+        // Google Play: the official extensions are built in, and Play delivers updates.
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("boolean", "INSTALLABLE_EXTENSIONS", "false")
+            buildConfigField("boolean", "UPDATE_CHECKER", "false")
+        }
+    }
+
+    sourceSets.getByName("play") {
+        kotlin.srcDirs(bundledExtensions.map { extensionsCheckout.resolve("extensions/$it/src/main/kotlin") })
     }
 
     signingConfigs {
@@ -86,5 +114,20 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.aboutlibraries.compose.m3)
 
+    // What the bundled extensions use besides the platform above.
+    "playImplementation"(libs.jsoup)
+    "playImplementation"(libs.jsch)
+
     testImplementation(libs.junit)
+}
+
+// Fail early, with the fix, instead of with hundreds of unresolved references.
+tasks.matching { it.name.startsWith("compilePlay") }.configureEach {
+    doFirst {
+        val missing = bundledExtensions.filterNot { extensionsCheckout.resolve("extensions/$it").isDirectory }
+        check(missing.isEmpty()) {
+            "The Play build compiles in extensions from $extensionsCheckout, which lacks $missing. Clone " +
+                "https://github.com/atasanbratan/routerhub-extensions there or pass -Prouterhub.extensions=<path>."
+        }
+    }
 }

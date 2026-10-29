@@ -33,6 +33,12 @@ jobs:
         with:
           fetch-depth: 0 # the notes link to the comparison with the previous tag
           persist-credentials: false
+      # The Play bundle compiles the official extensions in from their latest main.
+      - uses: actions/checkout@v7
+        with:
+          repository: atasanbratan/routerhub-extensions
+          path: routerhub-extensions
+          persist-credentials: false
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -60,13 +66,15 @@ jobs:
           fi
           printf '%s' "$SIGNING_KEY" | base64 -d > "$RUNNER_TEMP/release.jks"
 
-      - name: Test the SDK and build the release APK
+      - name: Test, build the release APK and the Play bundle
         env:
           ROUTERHUB_KEYSTORE: ${{ runner.temp }}/release.jks
           ROUTERHUB_KEYSTORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           ROUTERHUB_KEY_ALIAS: ${{ secrets.ALIAS }}
           ROUTERHUB_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :router-api:test :app:testReleaseUnitTest :app:assembleRelease --stacktrace
+        run: >-
+          ./gradlew :router-api:test :app:testGithubReleaseUnitTest :app:assembleGithubRelease :app:bundlePlayRelease
+          -Prouterhub.extensions=routerhub-extensions --stacktrace
 
       - name: Delete the signing key
         if: always()
@@ -75,7 +83,7 @@ jobs:
       - name: Check the signature and name the APK
         run: |
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
-          apk="app/build/outputs/apk/release/app-release.apk"
+          apk="app/build/outputs/apk/github/release/app-github-release.apk"
           signer="$("$apksigner" verify --print-certs "$apk" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1)"
           if [ "$signer" != "$APP_SIGNER_SHA256" ]; then
             echo "::error::The APK is signed by $signer, expected $APP_SIGNER_SHA256"
@@ -91,6 +99,14 @@ jobs:
         with:
           name: release
           path: dist/
+          if-no-files-found: error
+
+      # For Google Play only: upload it in Play Console. It is signed with the same key, which Play
+      # uses as the upload key; it is not attached to the GitHub release.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: play-bundle
+          path: app/build/outputs/bundle/playRelease/app-play-release.aab
           if-no-files-found: error
 
   release:

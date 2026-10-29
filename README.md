@@ -122,8 +122,8 @@ You need JDK 17+, the Android SDK (API 36) and an Android 9+ device or emulator.
 ```bash
 git clone https://github.com/atasanbratan/routerhub.git
 cd routerhub
-./gradlew :app:assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:assembleGithubDebug
+adb install -r app/build/outputs/apk/github/debug/app-github-debug.apk
 ```
 
 The app is an empty shell until an extension is installed. Build the ones you want from the

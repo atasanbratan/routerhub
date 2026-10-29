@@ -9,15 +9,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!--
-        Package visibility (Android 11+): extensions are discovered by scanning installed packages
-        for the dev.routerhub.extension feature, the same model Mihon uses. Fine for F-Droid and
-        GitHub releases; Google Play would require a declaration form for this permission.
-    -->
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
-
     <application
         android:name=".RouterHubApp"
         android:allowBackup="false"

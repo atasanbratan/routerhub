@@ -23,8 +23,28 @@ The [Release workflow](../.github/workflows/release.yml) then:
 - refuses the APK unless its certificate is the expected one (`APP_SIGNER_SHA256` in the workflow);
 - publishes `routerhub-v0.2.0.apk` with the notes and a SHA-256 checksum table.
 
+The same run builds the Google Play bundle (`app-play-release.aab`, workflow artifact **play-bundle**);
+upload it in Play Console. See [Google Play](#google-play) below.
+
 A failed run publishes nothing. Fix the cause, delete the tag (`git push origin :v0.2.0`, `git tag -d v0.2.0`)
 and tag again.
+
+## Google Play
+
+Play allows neither extension discovery (the all-packages permission) nor loading code from APKs installed
+outside Play, so the app has two flavors:
+
+| Flavor | Extensions | Updates | Built by |
+| --- | --- | --- | --- |
+| `github` | separate APKs, signature-checked | About → Check for updates | `:app:assembleGithubRelease` |
+| `play` | the official ones compiled in from `routerhub-extensions` | Google Play | `:app:bundlePlayRelease` |
+
+The `play` flavor reads the extension sources from a checkout of routerhub-extensions next to this repository,
+or wherever `-Prouterhub.extensions=<path>` points. A router added to the extensions repository reaches Play
+users with the next app release.
+
+Play re-signs the app with its own app signing key; our app key is the **upload key**. So the Play and GitHub
+builds have different signatures, and a phone can't switch between them without reinstalling.
 
 ## Signing keys
 

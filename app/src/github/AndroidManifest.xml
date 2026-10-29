@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Package visibility (Android 11+): extensions are discovered by scanning installed packages
+        for the dev.routerhub.extension feature, the same model Mihon uses. Fine for F-Droid and
+        GitHub releases; Google Play doesn't allow it, which is why the play flavor builds the
+        extensions in instead and has no such permission.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+</manifest>

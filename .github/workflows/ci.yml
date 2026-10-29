@@ -23,13 +23,40 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v6
-      - name: Test router-api and assemble the debug app
-        run: ./gradlew :router-api:test :app:assembleDebug --stacktrace
+      - name: Test router-api and the app, assemble the debug app
+        run: ./gradlew :router-api:test :app:testGithubDebugUnitTest :app:assembleGithubDebug --stacktrace
       - uses: actions/upload-artifact@v7
         with:
           name: routerhub-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/github/debug/app-github-debug.apk
           if-no-files-found: error
+
+  play:
+    name: Build the Play variant (extensions built in)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: atasanbratan/routerhub-extensions
+          path: routerhub-extensions
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Assemble the Play debug app
+        run: ./gradlew :app:assemblePlayDebug -Prouterhub.extensions=routerhub-extensions --stacktrace
+      - name: Check it doesn't ask to see every installed app
+        run: |
+          aapt2="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/aapt2"
+          if "$aapt2" dump permissions app/build/outputs/apk/play/debug/app-play-debug.apk | grep QUERY_ALL_PACKAGES; then
+            echo "::error::The Play build must not request QUERY_ALL_PACKAGES"
+            exit 1
+          fi
 
   sdk:
     name: Publish router-api (as JitPack does)
