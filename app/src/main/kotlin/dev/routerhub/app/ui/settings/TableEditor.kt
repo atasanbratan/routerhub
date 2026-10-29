@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -132,6 +135,7 @@ private fun rowDetails(field: SettingField.Table, row: List<String>): String =
 @Composable
 private fun AddRowDialog(field: SettingField.Table, onDismiss: () -> Unit, onAdd: (List<String>) -> Unit) {
     val asked = field.columns.filter { !it.readOnly }
+    val firstTyped = asked.firstOrNull { it.kind != ColumnKind.CHOICE }?.key
     val values = remember {
         mutableStateMapOf<String, String>().apply {
             asked.forEach { put(it.key, it.defaultValue.ifEmpty { if (it.kind == ColumnKind.CHOICE) it.options.firstOrNull()?.value.orEmpty() else "" }) }
@@ -146,7 +150,7 @@ private fun AddRowDialog(field: SettingField.Table, onDismiss: () -> Unit, onAdd
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 asked.forEach { column ->
-                    ColumnField(column, values[column.key].orEmpty()) { values[column.key] = it }
+                    ColumnField(column, values[column.key].orEmpty(), autoFocus = column.key == firstTyped) { values[column.key] = it }
                 }
             }
         },
@@ -161,7 +165,7 @@ private fun AddRowDialog(field: SettingField.Table, onDismiss: () -> Unit, onAdd
 }
 
 @Composable
-private fun ColumnField(column: TableColumn, value: String, onChange: (String) -> Unit) {
+private fun ColumnField(column: TableColumn, value: String, autoFocus: Boolean, onChange: (String) -> Unit) {
     val label = column.title + if (column.optional) " (optional)" else ""
     if (column.kind == ColumnKind.CHOICE) {
         var open by remember { mutableStateOf(false) }
@@ -183,10 +187,16 @@ private fun ColumnField(column: TableColumn, value: String, onChange: (String) -
     }
     var visible by remember { mutableStateOf(false) }
     val secret = column.kind == ColumnKind.SECRET
+    val focusRequester = remember { FocusRequester() }
+    if (autoFocus) {
+        // The example only shows in a focused field, so focus the first one as the dialog opens.
+        LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+    }
     OutlinedTextField(
         value = value,
         onValueChange = { onChange(if (column.kind == ColumnKind.NUMBER) it.filter(Char::isDigit).take(9) else it) },
         label = { Text(label) },
+        placeholder = exampleFor(column.kind)?.let { { Text(it) } },
         singleLine = true,
         supportingText = column.hint?.let { { Text(it) } },
         visualTransformation = if (secret && !visible) PasswordVisualTransformation() else VisualTransformation.None,
@@ -210,6 +220,13 @@ private fun ColumnField(column: TableColumn, value: String, onChange: (String) -
                 else -> KeyboardType.Text
             },
         ),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).focusRequester(focusRequester),
     )
+}
+
+/** What a value of this kind looks like, shown inside the empty field. Nothing for kinds with no fixed shape. */
+private fun exampleFor(kind: ColumnKind): String? = when (kind) {
+    ColumnKind.MAC_ADDRESS -> "e.g. 00:11:22:33:44:55"
+    ColumnKind.IP_ADDRESS -> "e.g. 192.168.1.10"
+    else -> null
 }

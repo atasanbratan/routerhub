@@ -38,7 +38,9 @@ rows are matched by value, which works whatever normalisation the extension appl
 back exactly what a read returned.
 
 Column kinds are `TEXT`, `NUMBER`, `CHOICE`, `IP_ADDRESS`, `MAC_ADDRESS` and `SECRET`. A `SECRET` column is
-write-only: the add form asks for it, masked, and a row never shows it.
+write-only: the add form asks for it, masked, and a row never shows it. For `MAC_ADDRESS` and
+`IP_ADDRESS` columns the add form shows an example of the expected format (`e.g. 00:11:22:33:44:55`)
+inside the empty field, so use the column `hint` only for what the example cannot say.
 
 ## Rules the contract enforces
 
