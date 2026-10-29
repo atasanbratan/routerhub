@@ -113,6 +113,10 @@ rules that make loading code across APKs work, are in [docs/architecture.md](doc
 
 ## Get it running
 
+**Just want the app?** Download the signed APK from [GitHub Releases](https://github.com/atasanbratan/routerhub/releases/latest)
+or the [website](https://atasanbratan.github.io/routerhub/download), then pick extensions from the
+[extension list](https://atasanbratan.github.io/routerhub/extensions/). The rest of this section builds it from source.
+
 You need JDK 17+, the Android SDK (API 36) and an Android 9+ device or emulator.
 
 ```bash
@@ -197,7 +201,8 @@ vulnerability privately through [SECURITY.md](SECURITY.md).
 
 ## Roadmap
 
-- [ ] Signed releases, and an in-app extension index so installing one is a tap
+- [x] Signed releases ([how releasing works](docs/releasing.md)) and a website with the extension list
+- [ ] An in-app extension index, so installing one is a tap
 - [ ] More pages for the TP-Link extension: QoS, IPTV, ALG, DNS, backup and restore
 - [ ] A Wi-Fi schedule grid editor, and advanced radio settings (needs careful hardware testing)
 - [ ] Translations: the app's strings are English-only today

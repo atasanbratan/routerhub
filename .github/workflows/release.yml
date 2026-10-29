@@ -1,0 +1,116 @@
+name: Release
+
+# Push a tag named after the app version to publish a signed APK as a GitHub release, as Mihon does:
+#   git tag v0.1.0 && git push origin v0.1.0
+# The tag must equal "v" + versionName in app/build.gradle.kts, and CHANGELOG.md must have a section
+# for that version; its text becomes the release notes. docs/releasing.md has the whole checklist.
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The certificate the app is signed with. A build signed with anything else is not released, so a
+  # wrong or replaced SIGNING_KEY secret can't ship an APK that won't update over the previous one.
+  APP_SIGNER_SHA256: 7b80908879c6e923d5e7de32cb5610ac4c93e08cc1dff9817561980c9fc0ec4d
+
+jobs:
+  build:
+    name: Build the signed APK
+    if: github.repository == 'atasanbratan/routerhub'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the notes link to the comparison with the previous tag
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Check the tag against the app version
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          declared="$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)"
+          if [ "$version" != "$declared" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match versionName \"$declared\" in app/build.gradle.kts"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Write the signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::The SIGNING_KEY secret is not set (see docs/releasing.md)"
+            exit 1
+          fi
+          printf '%s' "$SIGNING_KEY" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Test the SDK and build the release APK
+        env:
+          ROUTERHUB_KEYSTORE: ${{ runner.temp }}/release.jks
+          ROUTERHUB_KEYSTORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          ROUTERHUB_KEY_ALIAS: ${{ secrets.ALIAS }}
+          ROUTERHUB_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :router-api:test :app:testReleaseUnitTest :app:assembleRelease --stacktrace
+
+      - name: Delete the signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Check the signature and name the APK
+        run: |
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+          apk="app/build/outputs/apk/release/app-release.apk"
+          signer="$("$apksigner" verify --print-certs "$apk" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1)"
+          if [ "$signer" != "$APP_SIGNER_SHA256" ]; then
+            echo "::error::The APK is signed by $signer, expected $APP_SIGNER_SHA256"
+            exit 1
+          fi
+          mkdir -p dist
+          cp "$apk" "dist/routerhub-v${{ steps.version.outputs.version }}.apk"
+
+      - name: Write the release notes
+        run: bash .github/scripts/release-notes.sh "${{ steps.version.outputs.version }}" "$APP_SIGNER_SHA256" dist/*.apk > dist/notes.md
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: Publish the GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+          path: dist
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "RouterHub v$VERSION" \
+            --notes-file dist/notes.md \
+            --verify-tag

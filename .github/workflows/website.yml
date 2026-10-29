@@ -1,0 +1,68 @@
+name: Website
+
+# Builds website/ with VitePress and deploys it to GitHub Pages, as keiyoushi.github.io does:
+# https://atasanbratan.github.io/routerhub/
+# The extension list and the download button fetch their data in the browser, so the site only needs
+# rebuilding when its own pages change.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "docs/assets/**"
+      - ".github/workflows/website.yml"
+  pull_request:
+    paths:
+      - "website/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # "last updated" dates come from git history
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - name: Copy the logo and screenshots
+        run: |
+          mkdir -p public/screenshots
+          cp ../docs/assets/logo.svg public/
+          cp ../docs/assets/screenshots/*.png public/screenshots/
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
+        with:
+          path: website/.vitepress/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request' && github.repository == 'atasanbratan/routerhub'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

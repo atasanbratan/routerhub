@@ -1,0 +1,9 @@
+node_modules/
+.vitepress/dist/
+.vitepress/cache/
+# Copied from docs/assets by the Website workflow
+public/logo.svg
+public/screenshots/
+# Local test data (see .vitepress/theme/constants.ts)
+.env.local
+public/_repo/

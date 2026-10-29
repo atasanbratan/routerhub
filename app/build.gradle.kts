@@ -4,9 +4,14 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.aboutlibraries)
 }
 
 val officialSigners: String = providers.gradleProperty("routerhub.officialSigners").getOrElse("")
+
+// The release key, handed over by CI (.github/workflows/release.yml) as environment variables. Without
+// them a release build is left unsigned, so a local `assembleRelease` still works for testing R8.
+val releaseKeyStore: String? = providers.environmentVariable("ROUTERHUB_KEYSTORE").orNull
 
 android {
     namespace = "dev.routerhub.app"
@@ -19,10 +24,25 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         buildConfigField("String", "OFFICIAL_EXTENSION_SIGNERS", "\"$officialSigners\"")
+        // Where the About screen looks for updates and links to; forks change it here.
+        buildConfigField("String", "GITHUB_REPO", "\"atasanbratan/routerhub\"")
+        buildConfigField("String", "WEBSITE_URL", "\"https://atasanbratan.github.io/routerhub\"")
+    }
+
+    signingConfigs {
+        if (releaseKeyStore != null) {
+            create("release") {
+                storeFile = file(releaseKeyStore)
+                storePassword = providers.environmentVariable("ROUTERHUB_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("ROUTERHUB_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("ROUTERHUB_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -64,4 +84,7 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
+    implementation(libs.aboutlibraries.compose.m3)
+
+    testImplementation(libs.junit)
 }

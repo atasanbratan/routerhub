@@ -1,0 +1,19 @@
+{
+  "name": "routerhub-website",
+  "private": true,
+  "type": "module",
+  "description": "The RouterHub website: download, guides and the extension list, built with VitePress.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4",
+    "vue": "3.5.22"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

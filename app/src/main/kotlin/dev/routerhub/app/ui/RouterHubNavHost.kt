@@ -28,6 +28,8 @@ import androidx.navigation.navArgument
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.ui.add.AddRouterScreen
 import dev.routerhub.app.ui.browse.BrowseScreen
+import dev.routerhub.app.ui.more.AboutScreen
+import dev.routerhub.app.ui.more.LicensesScreen
 import dev.routerhub.app.ui.more.MoreScreen
 import dev.routerhub.app.ui.router.RouterDetailScreen
 import dev.routerhub.app.ui.routers.RoutersScreen
@@ -44,6 +46,8 @@ private object Routes {
     const val ADD = "add?firmware={firmware}"
     const val EDIT = "edit/{id}"
     const val SETTINGS = "router/{id}/settings/{page}"
+    const val ABOUT = "about"
+    const val LICENSES = "about/licenses"
     fun router(id: String) = "router/$id"
     fun settings(id: String, page: String) = "router/$id/settings/$page"
     fun edit(id: String) = "edit/$id"
@@ -103,7 +107,16 @@ fun RouterHubNavHost(container: AppContainer) {
                 BrowseScreen(container = container, onAddRouter = { navController.navigate(Routes.add(it)) })
             }
             composable(TopLevel.MORE.route) {
-                MoreScreen(container = container)
+                MoreScreen(container = container, onOpenAbout = { navController.navigate(Routes.ABOUT) })
+            }
+            composable(Routes.ABOUT) {
+                AboutScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenLicenses = { navController.navigate(Routes.LICENSES) },
+                )
+            }
+            composable(Routes.LICENSES) {
+                LicensesScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.ROUTER, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
                 val id = entry.arguments?.getString("id").orEmpty()

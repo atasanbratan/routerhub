@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Info
@@ -39,7 +38,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.routerhub.api.ExtensionContract
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.BuildConfig
 import dev.routerhub.app.data.ThemeMode
@@ -47,7 +45,7 @@ import dev.routerhub.app.ui.components.RouterCover
 
 /** Mihon-style "More": a logo header, then a flat list of settings. */
 @Composable
-fun MoreScreen(container: AppContainer) {
+fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit) {
     val prefs = container.preferences
     val themeMode by prefs.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by prefs.dynamicColor.collectAsStateWithLifecycle()
@@ -99,17 +97,10 @@ fun MoreScreen(container: AppContainer) {
             HorizontalDivider()
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = { Text("Version") },
-                supportingContent = { Text("${BuildConfig.VERSION_NAME} (${BuildConfig.BUILD_TYPE})") },
+                headlineContent = { Text("About") },
+                supportingContent = { Text("v${BuildConfig.VERSION_NAME}") },
                 leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
-            )
-            ListItem(
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = { Text("Extension API") },
-                supportingContent = {
-                    Text("router-api v${ExtensionContract.MIN_SUPPORTED_API_VERSION}–v${ExtensionContract.API_VERSION}")
-                },
-                leadingContent = { Icon(Icons.Outlined.Code, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onOpenAbout),
             )
         }
     }
