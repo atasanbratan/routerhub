@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" width="1280" height="360" role="img" aria-label="RouterHub: manage your home router from your phone, with extensions">
+  <title>RouterHub</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071a45"/>
+      <stop offset="0.55" stop-color="#0a3a96"/>
+      <stop offset="1" stop-color="#1f7aee"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b86f2"/>
+      <stop offset="1" stop-color="#0049a8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.35" r="0.6">
+      <stop offset="0" stop-color="#8fc0ff" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#8fc0ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="360" fill="url(#sky)"/>
+  <rect width="1280" height="360" fill="url(#glow)"/>
+
+  <!-- a small network: one hub and the things it talks to -->
+  <g stroke="#cfe3ff" stroke-opacity="0.35" stroke-width="2" fill="none">
+    <path d="M1010 180 L860 92"/>
+    <path d="M1010 180 L900 270"/>
+    <path d="M1010 180 L1160 96"/>
+    <path d="M1010 180 L1180 262"/>
+    <path d="M860 92 L760 150"/>
+    <path d="M1160 96 L1236 170"/>
+    <path d="M900 270 L800 308"/>
+  </g>
+  <g fill="#cfe3ff">
+    <circle cx="860" cy="92" r="9" fill-opacity="0.75"/>
+    <circle cx="900" cy="270" r="9" fill-opacity="0.75"/>
+    <circle cx="1160" cy="96" r="9" fill-opacity="0.75"/>
+    <circle cx="1180" cy="262" r="9" fill-opacity="0.75"/>
+    <circle cx="760" cy="150" r="6" fill-opacity="0.5"/>
+    <circle cx="1236" cy="170" r="6" fill-opacity="0.5"/>
+    <circle cx="800" cy="308" r="6" fill-opacity="0.5"/>
+  </g>
+  <circle cx="1010" cy="180" r="44" fill="#ffffff" fill-opacity="0.14"/>
+  <circle cx="1010" cy="180" r="30" fill="#ffffff" fill-opacity="0.95"/>
+  <g transform="translate(1010 180) scale(1.3) translate(-12 -12)" fill="#0058ca">
+    <path d="M20.2,5.9l0.8,-0.8C19.6,3.7 17.8,3 16,3s-3.6,0.7 -5,2.1l0.8,0.8C13,4.8 14.5,4.2 16,4.2s3,0.6 4.2,1.7zM19.4,6.7c-0.9,-0.9 -2.1,-1.4 -3.4,-1.4s-2.5,0.5 -3.4,1.4l0.8,0.8c0.7,-0.7 1.6,-1 2.6,-1 0.9,0 1.9,0.4 2.6,1l0.8,-0.8zM19,13h-2L17,9h-2v4L5,13c-1.1,0 -2,0.9 -2,2v4c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2v-4c0,-1.1 -0.9,-2 -2,-2zM8,18L6,18v-2h2v2zM11.5,18h-2v-2h2v2zM15,18h-2v-2h2v2z"/>
+  </g>
+
+  <!-- logo tile -->
+  <rect x="84" y="94" width="148" height="148" rx="34" fill="url(#tile)"/>
+  <rect x="84" y="94" width="148" height="148" rx="34" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2"/>
+  <g transform="translate(158 168) scale(4.3) translate(-12 -12)" fill="#ffffff">
+    <path d="M20.2,5.9l0.8,-0.8C19.6,3.7 17.8,3 16,3s-3.6,0.7 -5,2.1l0.8,0.8C13,4.8 14.5,4.2 16,4.2s3,0.6 4.2,1.7zM19.4,6.7c-0.9,-0.9 -2.1,-1.4 -3.4,-1.4s-2.5,0.5 -3.4,1.4l0.8,0.8c0.7,-0.7 1.6,-1 2.6,-1 0.9,0 1.9,0.4 2.6,1l0.8,-0.8zM19,13h-2L17,9h-2v4L5,13c-1.1,0 -2,0.9 -2,2v4c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2v-4c0,-1.1 -0.9,-2 -2,-2zM8,18L6,18v-2h2v2zM11.5,18h-2v-2h2v2zM15,18h-2v-2h2v2z"/>
+  </g>
+
+  <!-- wordmark -->
+  <g font-family="Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" fill="#ffffff">
+    <text x="268" y="176" font-size="88" font-weight="700" letter-spacing="-2">RouterHub</text>
+    <text x="272" y="222" font-size="29" fill="#d6e6ff">Manage your home router from your phone.</text>
+    <text x="272" y="262" font-size="22" fill="#a9c9ff">An empty shell plus extensions: WEB, SSH and Telnet.</text>
+  </g>
+</svg>

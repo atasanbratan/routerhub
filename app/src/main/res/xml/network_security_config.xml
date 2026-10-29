@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Router admin UIs are almost always plain HTTP on private addresses (192.168.x.x, 10.x.x.x), and
+    the network security config can only scope by domain, not by IP range, so cleartext is allowed
+    globally. Because extension code runs in our process, THIS policy is what applies to their
+    sockets; an extension can't loosen or tighten it.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

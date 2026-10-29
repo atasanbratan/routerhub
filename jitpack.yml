@@ -1,0 +1,5 @@
+# JitPack builds the SDK that the extensions repository compiles against.
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :router-api:publishToMavenLocal

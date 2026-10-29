@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: Test the SDK, build the app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Test router-api and assemble the debug app
+        run: ./gradlew :router-api:test :app:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: routerhub-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  sdk:
+    name: Publish router-api (as JitPack does)
+    runs-on: ubuntu-latest
+    env:
+      # JitPack has no Android SDK, so settings.gradle.kts leaves the app out when this is set.
+      JITPACK: "true"
+      VERSION: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Publish the SDK to the local Maven repository
+        run: ./gradlew :router-api:publishToMavenLocal --stacktrace
+      - name: Check what was published
+        run: |
+          ls -l ~/.m2/repository/com/github/atasanbratan/routerhub/router-api/ci/
+          test -f ~/.m2/repository/com/github/atasanbratan/routerhub/router-api/ci/router-api-ci.jar
+          test -f ~/.m2/repository/com/github/atasanbratan/routerhub/router-api/ci/router-api-ci-sources.jar

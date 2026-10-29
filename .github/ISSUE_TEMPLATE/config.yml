@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support for a new router, or a bug in an extension
+    url: https://github.com/atasanbratan/routerhub-extensions/issues/new/choose
+    about: Extensions (TP-Link, OpenWrt, Demo and new ones) live in their own repository.
+  - name: Questions and ideas
+    url: https://github.com/atasanbratan/routerhub/discussions
+    about: Ask a question, share an idea or show what you built.
+  - name: Report a security vulnerability
+    url: https://github.com/atasanbratan/routerhub/security/advisories/new
+    about: Please report security problems privately, not in a public issue.
