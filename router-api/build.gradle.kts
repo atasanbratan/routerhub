@@ -33,17 +33,19 @@ dependencies {
 }
 
 // Extensions live in their own repository and compile against this module as
-//   compileOnly("com.github.atasanbratan.routerhub:router-api:<tag>")
-// JitPack builds it from a git tag (see jitpack.yml); `publishToMavenLocal` does the same locally.
+//   compileOnly("com.github.atasanbratan:routerhub:<tag>")
+// JitPack builds it from a git tag (see jitpack.yml). It serves a repository that builds a single
+// artifact as <user>:<repository>, which is why the SDK is called "routerhub" here; publishing to
+// the local Maven repository gives the same coordinates.
 publishing {
     publications {
         create<MavenPublication>("release") {
             from(components["java"])
-            groupId = "com.github.atasanbratan.routerhub"
-            artifactId = "router-api"
+            groupId = "com.github.atasanbratan"
+            artifactId = "routerhub"
             version = providers.environmentVariable("VERSION").getOrElse("0.1.0-SNAPSHOT")
             pom {
-                name.set("RouterHub router-api")
+                name.set("RouterHub SDK (router-api)")
                 description.set("The contract between the RouterHub Android app and its router extensions.")
                 url.set("https://github.com/atasanbratan/routerhub")
                 licenses {

@@ -23,7 +23,7 @@ android {
 
 dependencies {
     // The platform the app hands to extensions at runtime. compileOnly = compile against it, do not package it.
-    compileOnly("com.github.atasanbratan.routerhub:router-api:<tag>")
+    compileOnly("com.github.atasanbratan:routerhub:<tag>")
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib:<version>")
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:<version>")
     compileOnly("com.squareup.okhttp3:okhttp:<version>")

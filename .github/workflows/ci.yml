@@ -49,6 +49,6 @@ jobs:
         run: ./gradlew :router-api:publishToMavenLocal --stacktrace
       - name: Check what was published
         run: |
-          ls -l ~/.m2/repository/com/github/atasanbratan/routerhub/router-api/ci/
-          test -f ~/.m2/repository/com/github/atasanbratan/routerhub/router-api/ci/router-api-ci.jar
-          test -f ~/.m2/repository/com/github/atasanbratan/routerhub/router-api/ci/router-api-ci-sources.jar
+          ls -l ~/.m2/repository/com/github/atasanbratan/routerhub/ci/
+          test -f ~/.m2/repository/com/github/atasanbratan/routerhub/ci/routerhub-ci.jar
+          test -f ~/.m2/repository/com/github/atasanbratan/routerhub/ci/routerhub-ci-sources.jar
