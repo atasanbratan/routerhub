@@ -70,6 +70,32 @@ existing app build stops treating new extensions as Official. Keep offline backu
 The extensions key's fingerprint is also `routerhub.officialSigners` in `gradle.properties`, so the app
 recognises official extensions. A fork that publishes its own extensions replaces it.
 
+### Rotating or replacing a key
+
+Do this only if a key is lost or leaked: a new key has a cost for everyone who already installed the app.
+
+**The extensions key.** `routerhub.officialSigners` is a comma-separated list, so old and new can overlap:
+
+1. Create the new key and add its fingerprint to `routerhub.officialSigners`, after the old one. Update the
+   table above.
+2. Release the app, and give people time to update.
+3. Replace the four secrets in routerhub-extensions and publish the extensions signed with the new key.
+4. In a later app release, remove the old fingerprint. If the old key leaked, do this in step 1 instead:
+   extensions signed with it must stop being Official at once, even though the published ones then show as
+   untrusted until step 3.
+
+**The app key.** Android refuses an update signed with a different key, so GitHub users must uninstall and
+reinstall, which removes their saved routers (Export routers in More keeps everything but the passwords).
+
+1. Create the new key and replace the four secrets in this repository.
+2. Set `APP_SIGNER_SHA256` in the Release workflow and the table above to the new fingerprint, or the release
+   is refused.
+3. Say so at the top of the CHANGELOG section of the release.
+
+**The Play upload key** is the same app key, but Play users are not affected, because Play signs what they
+install with its own key. Ask for an upload key reset in Play Console (Test and release, App integrity), then
+do the steps above.
+
 ## The website
 
 `website/` is a VitePress site, deployed to GitHub Pages by the [Website workflow](../.github/workflows/website.yml)
