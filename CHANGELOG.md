@@ -10,6 +10,15 @@ Add them under **Unreleased** as you go; releasing renames that heading to the n
 
 ## [Unreleased]
 
+### Added
+
+- Export your routers to a file and import them on another phone, under More. The file holds no passwords
+  or SSH host keys: each imported router asks for its password when you first open it.
+
+### Changed
+
+- **Save** on a settings page stays off until a password that must be typed twice matches.
+
 ## [0.1.0] - 2026-10-29
 
 ### Added

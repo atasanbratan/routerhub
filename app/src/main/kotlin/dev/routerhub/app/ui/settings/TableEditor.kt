@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -47,6 +48,7 @@ import dev.routerhub.api.ColumnKind
 import dev.routerhub.api.SettingField
 import dev.routerhub.api.TableCodec
 import dev.routerhub.api.TableColumn
+import dev.routerhub.app.R
 
 /**
  * An editable list. Rows can be deleted and new ones added; the router-specific work of turning
@@ -76,7 +78,7 @@ fun TableEditor(
             if (!field.readOnly) {
                 TextButton(onClick = { adding = true }, enabled = canAdd) {
                     Icon(Icons.Outlined.Add, contentDescription = null)
-                    Text("Add", modifier = Modifier.padding(start = 4.dp))
+                    Text(stringResource(R.string.add), modifier = Modifier.padding(start = 4.dp))
                 }
             }
         }
@@ -103,7 +105,7 @@ fun TableEditor(
                         IconButton(
                             onClick = { onChange(TableCodec.encode(rows.filterIndexed { i, _ -> i != index })) },
                             enabled = enabled,
-                        ) { Icon(Icons.Outlined.Delete, contentDescription = "Remove ${field.itemName}") }
+                        ) { Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.table_remove, field.itemName)) }
                     }
                 },
             )
@@ -146,7 +148,7 @@ private fun AddRowDialog(field: SettingField.Table, onDismiss: () -> Unit, onAdd
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add ${field.itemName}") },
+        title = { Text(stringResource(R.string.table_add, field.itemName)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 asked.forEach { column ->
@@ -158,15 +160,15 @@ private fun AddRowDialog(field: SettingField.Table, onDismiss: () -> Unit, onAdd
             TextButton(
                 onClick = { onAdd(field.columns.map { if (it.readOnly) "" else values[it.key].orEmpty().trim() }) },
                 enabled = complete,
-            ) { Text("Add") }
+            ) { Text(stringResource(R.string.add)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
 @Composable
 private fun ColumnField(column: TableColumn, value: String, autoFocus: Boolean, onChange: (String) -> Unit) {
-    val label = column.title + if (column.optional) " (optional)" else ""
+    val label = if (column.optional) stringResource(R.string.column_optional, column.title) else column.title
     if (column.kind == ColumnKind.CHOICE) {
         var open by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxWidth()) {
@@ -205,7 +207,7 @@ private fun ColumnField(column: TableColumn, value: String, autoFocus: Boolean, 
                 IconButton(onClick = { visible = !visible }) {
                     Icon(
                         if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        contentDescription = if (visible) "Hide" else "Show",
+                        contentDescription = if (visible) stringResource(R.string.hide) else stringResource(R.string.show),
                     )
                 }
             }
@@ -225,8 +227,9 @@ private fun ColumnField(column: TableColumn, value: String, autoFocus: Boolean, 
 }
 
 /** What a value of this kind looks like, shown inside the empty field. Nothing for kinds with no fixed shape. */
+@Composable
 private fun exampleFor(kind: ColumnKind): String? = when (kind) {
-    ColumnKind.MAC_ADDRESS -> "e.g. 00:11:22:33:44:55"
-    ColumnKind.IP_ADDRESS -> "e.g. 192.168.1.10"
+    ColumnKind.MAC_ADDRESS -> stringResource(R.string.example_mac)
+    ColumnKind.IP_ADDRESS -> stringResource(R.string.example_ip)
     else -> null
 }

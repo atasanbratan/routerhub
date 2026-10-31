@@ -1,5 +1,6 @@
 package dev.routerhub.app.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -26,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.ui.add.AddRouterScreen
 import dev.routerhub.app.ui.browse.BrowseScreen
 import dev.routerhub.app.ui.more.AboutScreen
@@ -35,10 +38,10 @@ import dev.routerhub.app.ui.router.RouterDetailScreen
 import dev.routerhub.app.ui.routers.RoutersScreen
 import dev.routerhub.app.ui.settings.SettingsPageScreen
 
-private enum class TopLevel(val route: String, val label: String, val selected: ImageVector, val unselected: ImageVector) {
-    ROUTERS("routers", "Routers", Icons.Filled.Router, Icons.Outlined.Router),
-    BROWSE("browse", "Browse", Icons.Filled.Explore, Icons.Outlined.Explore),
-    MORE("more", "More", Icons.Filled.MoreHoriz, Icons.Outlined.MoreHoriz),
+private enum class TopLevel(val route: String, @StringRes val label: Int, val selected: ImageVector, val unselected: ImageVector) {
+    ROUTERS("routers", R.string.routers, Icons.Filled.Router, Icons.Outlined.Router),
+    BROWSE("browse", R.string.browse, Icons.Filled.Explore, Icons.Outlined.Explore),
+    MORE("more", R.string.more, Icons.Filled.MoreHoriz, Icons.Outlined.MoreHoriz),
 }
 
 private object Routes {
@@ -83,7 +86,7 @@ fun RouterHubNavHost(container: AppContainer) {
                                 }
                             },
                             icon = { Icon(if (selected) tab.selected else tab.unselected, contentDescription = null) },
-                            label = { Text(tab.label) },
+                            label = { Text(stringResource(tab.label)) },
                         )
                     }
                 }

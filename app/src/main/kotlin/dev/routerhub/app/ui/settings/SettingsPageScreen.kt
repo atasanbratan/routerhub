@@ -44,6 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -52,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.routerhub.api.SettingField
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.ui.components.EmptyScreen
 
 /**
@@ -65,6 +68,13 @@ fun SettingsPageScreen(container: AppContainer, profileId: String, pageId: Strin
         key = "settings/$profileId/$pageId",
         factory = SettingsPageViewModel.factory(profileId, pageId, container),
     )
+    SettingsPageContent(viewModel, onBack)
+}
+
+/** The page itself, apart from how its view model is made, so UI tests can give it a fake router. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsPageContent(viewModel: SettingsPageViewModel, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var confirming by remember { mutableStateOf(false) }
@@ -78,15 +88,18 @@ fun SettingsPageScreen(container: AppContainer, profileId: String, pageId: Strin
 
     val page = state.page
     val changes = if (page != null) pendingChanges(page, state.edits) else emptyMap()
-    val invalid = page != null && page.fields.any { localError(it, currentValue(it, state.edits)) != null }
+    val invalid = page != null && (
+        page.fields.any { localError(it, currentValue(it, state.edits)) != null } ||
+            unconfirmed(page, changes, state.confirmations)
+        )
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
-                title = { Text(page?.info?.title ?: "Settings") },
+                title = { Text(page?.info?.title ?: stringResource(R.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back") }
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back)) }
                 },
                 actions = {
                     if (state.saving) {
@@ -95,7 +108,7 @@ fun SettingsPageScreen(container: AppContainer, profileId: String, pageId: Strin
                         TextButton(
                             onClick = { if (page?.applyWarning != null) confirming = true else viewModel.save() },
                             enabled = changes.isNotEmpty() && !invalid,
-                        ) { Text("Save") }
+                        ) { Text(stringResource(R.string.save)) }
                     }
                 },
             )
@@ -104,8 +117,8 @@ fun SettingsPageScreen(container: AppContainer, profileId: String, pageId: Strin
         val modifier = Modifier.padding(padding).fillMaxSize()
         when {
             state.loading && page == null -> Box(modifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            page == null -> EmptyScreen(state.loadError ?: "Couldn't load this page.", modifier) {
-                TextButton(onClick = viewModel::load) { Text("Retry") }
+            page == null -> EmptyScreen(state.loadError ?: stringResource(R.string.settings_load_failed), modifier) {
+                TextButton(onClick = viewModel::load) { Text(stringResource(R.string.retry)) }
             }
             else -> Column(modifier.verticalScroll(rememberScrollState()).imePadding().padding(bottom = 24.dp)) {
                 page.info.summary?.let {
@@ -118,7 +131,7 @@ fun SettingsPageScreen(container: AppContainer, profileId: String, pageId: Strin
                 }
                 page.fields.forEach { field ->
                     val value = currentValue(field, state.edits)
-                    val error = state.fieldErrors[field.key] ?: localError(field, value)
+                    val error = state.fieldErrors[field.key] ?: localError(field, value)?.message()
                     FieldRow(
                         field = field,
                         value = value,
@@ -136,19 +149,19 @@ fun SettingsPageScreen(container: AppContainer, profileId: String, pageId: Strin
     if (confirming && page != null) {
         AlertDialog(
             onDismissRequest = { confirming = false },
-            title = { Text("Apply changes?") },
+            title = { Text(stringResource(R.string.apply_title)) },
             text = {
                 Column {
                     page.applyWarning?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                     Text(
-                        "\nChanging: " + page.fields.filter { it.key in changes }.joinToString { it.title },
+                        "\n" + stringResource(R.string.apply_changing, page.fields.filter { it.key in changes }.joinToString { it.title }),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             },
-            confirmButton = { TextButton(onClick = { confirming = false; viewModel.save() }) { Text("Apply") } },
-            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
+            confirmButton = { TextButton(onClick = { confirming = false; viewModel.save() }) { Text(stringResource(R.string.apply)) } },
+            dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 }
@@ -212,7 +225,7 @@ private fun FieldRow(
                     IconButton(onClick = { visible = !visible }) {
                         Icon(
                             if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = if (visible) "Hide" else "Show",
+                            contentDescription = if (visible) stringResource(R.string.hide) else stringResource(R.string.show),
                         )
                     }
                 },
@@ -222,12 +235,12 @@ private fun FieldRow(
                 OutlinedTextField(
                     value = confirmation,
                     onValueChange = onConfirmationChange,
-                    label = { Text("Confirm ${field.title.lowercase()}") },
+                    label = { Text(stringResource(R.string.confirm_field, field.title.lowercase())) },
                     singleLine = true,
                     enabled = enabled,
                     isError = confirmation.isNotEmpty() && confirmation != value,
                     supportingText = if (confirmation.isNotEmpty() && confirmation != value) {
-                        { Text("The two entries don't match") }
+                        { Text(stringResource(R.string.entries_differ)) }
                     } else {
                         null
                     },
@@ -245,7 +258,7 @@ private fun FieldRow(
             singleLine = true,
             enabled = enabled,
             isError = error != null,
-            supportingText = { Text(error ?: field.summary ?: "${field.min} to ${field.max}") },
+            supportingText = { Text(error ?: field.summary ?: stringResource(R.string.number_range, field.min, field.max)) },
             suffix = field.unit?.let { { Text(it) } },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = fieldModifier,
@@ -284,6 +297,15 @@ private fun FieldRow(
             }
         }
     }
+}
+
+@Composable
+private fun LocalError.message(): String = when (this) {
+    is LocalError.OutOfRange -> stringResource(R.string.number_out_of_range, min, max)
+    LocalError.TooLong -> stringResource(R.string.too_long)
+    is LocalError.TooShort -> pluralStringResource(R.plurals.at_least_characters, minLength, minLength)
+    is LocalError.OverLength -> pluralStringResource(R.plurals.at_most_characters, maxLength, maxLength)
+    is LocalError.TooManyRows -> stringResource(R.string.too_many_rows, max, itemName)
 }
 
 /**

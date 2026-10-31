@@ -1,5 +1,6 @@
 package dev.routerhub.app.ui.settings
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,9 +9,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.routerhub.api.FirmwareTimeoutException
 import dev.routerhub.api.InvalidSettingException
 import dev.routerhub.api.RouterException
-import dev.routerhub.api.SettingField
 import dev.routerhub.api.SettingsPage
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.engine.FirmwareSession
 import dev.routerhub.app.ui.friendlyError
 import kotlinx.coroutines.CancellationException
@@ -35,11 +36,46 @@ data class SettingsUiState(
     val message: String? = null,
 )
 
-class SettingsPageViewModel(
+/** The router behind a settings page. The UI tests put a fake here. */
+interface SettingsSource {
+    suspend fun read(): SettingsPage
+    suspend fun write(changes: Map<String, String>)
+
+    /** The router now expects [password] as its login password. */
+    fun loginPasswordChanged(password: String)
+
+    /** The router's configuration changed, so open screens should refresh. */
+    fun changed()
+}
+
+private class RouterSettingsSource(
     private val profileId: String,
     private val pageId: String,
     private val container: AppContainer,
-) : ViewModel() {
+) : SettingsSource {
+    override suspend fun read() = session().readSettings(pageId)
+
+    override suspend fun write(changes: Map<String, String>) = session().writeSettings(pageId, changes)
+
+    override fun loginPasswordChanged(password: String) {
+        container.routers.get(profileId)?.let { container.routers.upsert(it.copy(password = password)) }
+    }
+
+    override fun changed() {
+        container.routerChanges.tryEmit(profileId)
+    }
+
+    private suspend fun session(): FirmwareSession {
+        val context = container.context
+        val profile = container.routers.get(profileId) ?: throw RouterException(context.getString(R.string.router_gone))
+        container.extensions.ready.first { it }
+        val factory = container.extensions.firmwares.first()[profile.firmwareId]
+            ?: throw RouterException(context.getString(R.string.settings_extension_missing))
+        return container.sessions.obtain(profile, factory)
+    }
+}
+
+class SettingsPageViewModel(private val source: SettingsSource, private val context: Context) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
@@ -52,13 +88,13 @@ class SettingsPageViewModel(
         viewModelScope.launch {
             _state.update { it.copy(loading = true, loadError = null) }
             try {
-                val page = session().readSettings(pageId)
+                val page = source.read()
                 _state.update { it.fresh(page) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: RouterException) {
-                Log.w(TAG, "Reading $pageId failed", e)
-                _state.update { it.copy(loading = false, loadError = friendlyError(e)) }
+                Log.w(TAG, "Reading the page failed", e)
+                _state.update { it.copy(loading = false, loadError = friendlyError(context, e)) }
             }
         }
     }
@@ -79,28 +115,16 @@ class SettingsPageViewModel(
         val changes = pendingChanges(page, current.edits)
         if (changes.isEmpty() || current.saving) return
 
-        val mismatch = page.fields.filterIsInstance<SettingField.Secret>().firstOrNull {
-            it.requiresConfirmation && changes.containsKey(it.key) && current.confirmations[it.key] != changes[it.key]
-        }
-        if (mismatch != null) {
-            _state.update { it.copy(fieldErrors = mapOf(mismatch.key to "The two entries don't match")) }
-            return
-        }
+        if (unconfirmed(page, changes, current.confirmations)) return
 
         viewModelScope.launch {
             _state.update { it.copy(saving = true, fieldErrors = emptyMap()) }
             try {
-                session().writeSettings(pageId, changes)
+                source.write(changes)
 
                 // The router now expects the new login password; keep the saved profile in step.
-                page.loginPasswordKey?.let { key ->
-                    val newPassword = changes[key]
-                    val profile = container.routers.get(profileId)
-                    if (newPassword != null && profile != null) {
-                        container.routers.upsert(profile.copy(password = newPassword))
-                    }
-                }
-                _state.update { it.copy(message = "Saved") }
+                page.loginPasswordKey?.let { changes[it] }?.let(source::loginPasswordChanged)
+                _state.update { it.copy(message = context.getString(R.string.saved)) }
                 reloadAfterWrite()
             } catch (e: CancellationException) {
                 throw e
@@ -108,18 +132,18 @@ class SettingsPageViewModel(
                 val known = page.fields.any { it.key == e.key }
                 _state.update {
                     it.copy(
-                        fieldErrors = if (known) mapOf(e.key to (e.message ?: "Not accepted")) else emptyMap(),
+                        fieldErrors = if (known) mapOf(e.key to (e.message ?: context.getString(R.string.not_accepted))) else emptyMap(),
                         message = if (known) null else e.message,
                     )
                 }
             } catch (e: FirmwareTimeoutException) {
                 // Restarting the radio can stall the router's web server mid-answer.
-                Log.w(TAG, "Saving $pageId timed out", e)
-                _state.update { it.copy(message = "No answer from the router. The change may still have applied.") }
+                Log.w(TAG, "Saving timed out", e)
+                _state.update { it.copy(message = context.getString(R.string.save_no_answer)) }
                 reloadAfterWrite()
             } catch (e: RouterException) {
-                Log.w(TAG, "Saving $pageId failed", e)
-                _state.update { it.copy(message = friendlyError(e)) }
+                Log.w(TAG, "Saving failed", e)
+                _state.update { it.copy(message = friendlyError(context, e)) }
             } finally {
                 _state.update { it.copy(saving = false) }
             }
@@ -130,15 +154,15 @@ class SettingsPageViewModel(
     private suspend fun reloadAfterWrite() {
         delay(RADIO_RESTART_MILLIS)
         try {
-            val page = session().readSettings(pageId)
+            val page = source.read()
             _state.update { it.fresh(page) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: RouterException) {
-            Log.w(TAG, "Re-reading $pageId failed", e)
-            _state.update { it.copy(message = "Saved, but the page couldn't be reloaded yet. Pull to refresh later.") }
+            Log.w(TAG, "Re-reading the page failed", e)
+            _state.update { it.copy(message = context.getString(R.string.saved_not_reloaded)) }
         }
-        container.routerChanges.tryEmit(profileId)
+        source.changed()
     }
 
     private fun SettingsUiState.fresh(page: SettingsPage) = copy(
@@ -146,20 +170,12 @@ class SettingsPageViewModel(
         edits = emptyMap(), confirmations = emptyMap(), fieldErrors = emptyMap(),
     )
 
-    private suspend fun session(): FirmwareSession {
-        val profile = container.routers.get(profileId) ?: throw RouterException("This router no longer exists")
-        container.extensions.ready.first { it }
-        val factory = container.extensions.firmwares.first()[profile.firmwareId]
-            ?: throw RouterException("The extension for this router isn't installed")
-        return container.sessions.obtain(profile, factory)
-    }
-
     companion object {
         private const val TAG = "SettingsPage"
         private const val RADIO_RESTART_MILLIS = 2_500L
 
         fun factory(profileId: String, pageId: String, container: AppContainer) = viewModelFactory {
-            initializer { SettingsPageViewModel(profileId, pageId, container) }
+            initializer { SettingsPageViewModel(RouterSettingsSource(profileId, pageId, container), container.context) }
         }
     }
 }

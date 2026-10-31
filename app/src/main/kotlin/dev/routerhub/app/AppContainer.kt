@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 /** Manual dependency graph: one instance of each service for the whole process. */
 class AppContainer(context: Context, scope: CoroutineScope) {
+    /** For the text view models put in their state. */
+    val context: Context = context.applicationContext
+
     /** Emits a router id after its configuration changed on the router, so open screens refresh. */
     val routerChanges = MutableSharedFlow<String>(extraBufferCapacity = 8)
 

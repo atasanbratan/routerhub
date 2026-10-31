@@ -26,11 +26,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.ProtocolBadge
@@ -52,11 +54,11 @@ fun RoutersScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets(0),
-        topBar = { TopAppBar(title = { Text("Routers") }, scrollBehavior = scrollBehavior) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.routers)) }, scrollBehavior = scrollBehavior) },
         floatingActionButton = {
             if (firmwares.isNotEmpty()) {
                 ExtendedFloatingActionButton(
-                    text = { Text("Add router") },
+                    text = { Text(stringResource(R.string.add_router)) },
                     icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
                     onClick = onAddRouter,
                     expanded = scrollBehavior.state.overlappedFraction == 0f,
@@ -66,12 +68,12 @@ fun RoutersScreen(
     ) { padding ->
         when {
             routers.isEmpty() && firmwares.isEmpty() -> EmptyScreen(
-                "No router extensions installed.\nInstall one, then find it under Browse.",
+                stringResource(R.string.routers_no_extensions),
                 modifier = Modifier.padding(padding),
-                action = { FilledTonalButton(onClick = onOpenBrowse) { Text("Open Browse") } },
+                action = { FilledTonalButton(onClick = onOpenBrowse) { Text(stringResource(R.string.open_browse)) } },
             )
             routers.isEmpty() -> EmptyScreen(
-                "Your router list is empty.\nAdd your first router to get started.",
+                stringResource(R.string.routers_empty),
                 modifier = Modifier.padding(padding),
             )
             else -> LazyColumn(
@@ -99,7 +101,7 @@ private fun RouterListItem(profile: RouterProfile, factory: RouterFirmwareFactor
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(profile.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                factory?.let { "${it.vendor} ${it.displayName}" } ?: "Extension not installed",
+                factory?.let { "${it.vendor} ${it.displayName}" } ?: stringResource(R.string.extension_not_installed),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (factory == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,

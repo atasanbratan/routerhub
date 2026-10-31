@@ -39,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -47,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.routerhub.api.Protocol
 import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.ProtocolBadge
@@ -78,15 +80,15 @@ fun AddRouterScreen(
                 title = {
                     Text(
                         when {
-                            editProfileId != null -> "Edit router"
-                            factory == null -> "Choose firmware"
-                            else -> "Add router"
+                            editProfileId != null -> stringResource(R.string.edit_router)
+                            factory == null -> stringResource(R.string.choose_firmware)
+                            else -> stringResource(R.string.add_router)
                         },
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { if (factory != null && canChangeFirmware) firmwareId = null else onBack() }) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -94,9 +96,9 @@ fun AddRouterScreen(
     ) { padding ->
         val modifier = Modifier.padding(padding).fillMaxSize()
         when {
-            editProfileId != null && editing == null -> EmptyScreen("This router no longer exists.", modifier)
+            editProfileId != null && editing == null -> EmptyScreen(stringResource(R.string.router_gone), modifier)
             editing != null && factory == null -> EmptyScreen(
-                "The extension for this router isn't installed, so it can't be edited right now.",
+                stringResource(R.string.edit_extension_missing),
                 modifier,
             )
             factory == null -> FirmwarePicker(firmwares.values.toList(), onPick = { firmwareId = it.id }, modifier = modifier)
@@ -116,7 +118,7 @@ fun AddRouterScreen(
 @Composable
 private fun FirmwarePicker(factories: List<RouterFirmwareFactory>, onPick: (RouterFirmwareFactory) -> Unit, modifier: Modifier) {
     if (factories.isEmpty()) {
-        EmptyScreen("No firmwares available.\nInstall a router extension first.", modifier)
+        EmptyScreen(stringResource(R.string.no_firmwares_available), modifier)
         return
     }
     LazyColumn(modifier) {
@@ -176,37 +178,37 @@ private fun ConnectionForm(
                 Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Icon(Icons.Outlined.WarningAmber, contentDescription = null)
                     Text(
-                        "Telnet sends your password unencrypted over the local network.",
+                        stringResource(R.string.telnet_warning),
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
         }
 
-        OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.field_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 host, { host = it.trim() },
-                label = { Text("Address") },
+                label = { Text(stringResource(R.string.field_address)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.weight(0.68f),
             )
             OutlinedTextField(
                 port, { port = it.filter(Char::isDigit).take(5) },
-                label = { Text("Port") },
+                label = { Text(stringResource(R.string.field_port)) },
                 singleLine = true,
                 isError = portNumber == null || portNumber !in 1..65535,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(0.32f),
             )
         }
-        OutlinedTextField(username, { username = it }, label = { Text("Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.field_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(
             password, { password = it },
-            label = { Text(if (existing != null) "New password" else "Password") },
+            label = { Text(if (existing != null) stringResource(R.string.field_new_password) else stringResource(R.string.field_password)) },
             supportingText = if (existing != null) {
-                { Text("Leave blank to keep the current password") }
+                { Text(stringResource(R.string.password_keep_hint)) }
             } else {
                 null
             },
@@ -217,7 +219,7 @@ private fun ConnectionForm(
                 IconButton(onClick = { showPassword = !showPassword }) {
                     Icon(
                         if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        contentDescription = if (showPassword) "Hide password" else "Show password",
+                        contentDescription = if (showPassword) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
                     )
                 }
             },
@@ -225,7 +227,7 @@ private fun ConnectionForm(
         )
         if (factory.protocol == Protocol.WEB) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Use HTTPS", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.use_https), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 Switch(checked = useHttps, onCheckedChange = {
                     useHttps = it
                     if (port == "80" && it) port = "443" else if (port == "443" && !it) port = "80"
@@ -233,7 +235,7 @@ private fun ConnectionForm(
             }
         }
         Text(
-            "Passwords are encrypted on this device with a hardware-backed key.",
+            stringResource(R.string.password_encryption_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -260,6 +262,7 @@ private fun ConnectionForm(
                         port = portNumber!!,
                         username = username.trim(),
                         password = password.ifEmpty { existing.password },
+                        passwordNeeded = existing.passwordNeeded && password.isEmpty(),
                         useHttps = useHttps,
                         // A pinned SSH key belongs to the old address; a new address must be confirmed again.
                         hostKeyFingerprint = existing.hostKeyFingerprint.takeIf { sameEndpoint },
@@ -270,7 +273,7 @@ private fun ConnectionForm(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(Icons.Outlined.Check, contentDescription = null)
-            Text("Save", modifier = Modifier.padding(start = 8.dp))
+            Text(stringResource(R.string.save), modifier = Modifier.padding(start = 8.dp))
         }
     }
 }

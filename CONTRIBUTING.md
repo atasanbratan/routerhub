@@ -38,6 +38,12 @@ To work on the app together with extensions, check
 [routerhub-extensions](https://github.com/atasanbratan/routerhub-extensions) out next to it and install an
 extension APK, for example the Demo extension, which needs no router at all.
 
+The settings form has UI tests that need an emulator or a phone, so CI only compiles them. Run them with:
+
+```bash
+./gradlew :app:connectedGithubDebugAndroidTest
+```
+
 ## Layout
 
 ```
@@ -59,7 +65,9 @@ docs/         architecture, settings contract, how to write an extension
 5. **No real data in the repository.** That means code, tests, fixtures and screenshots: no real SSIDs,
    passwords, MAC addresses, serial numbers, hostnames or public IP addresses. Use `02:00:00:00:00:xx`
    MACs and the documentation address ranges (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`).
-6. **Test what is pure.** Parsing and logic get unit tests. For UI changes, attach a screenshot to the pull
+6. **No hard-coded text.** What the app says goes in `app/src/main/res/values/strings.xml`, read with
+   `stringResource(...)`; text that comes from extensions stays theirs.
+7. **Test what is pure.** Parsing and logic get unit tests. For UI changes, attach a screenshot to the pull
    request (the Demo extension makes that easy and keeps real data out of it).
 
 Style is the official Kotlin style. Comments should explain *why*, not restate the code.

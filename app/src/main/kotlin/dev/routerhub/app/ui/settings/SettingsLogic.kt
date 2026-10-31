@@ -34,21 +34,36 @@ fun currentValue(field: SettingField, edits: Map<String, String>): String = edit
     is SettingField.Table -> TableCodec.encode(field.rows)
 }
 
-/** Client-side hint shown while typing. The extension re-validates everything before sending. */
-fun localError(field: SettingField, value: String): String? = when (field) {
-    is SettingField.Number -> value.trim().toLongOrNull().let { n ->
-        if (n == null || n < field.min || n > field.max) "Enter a number from ${field.min} to ${field.max}" else null
+/** True while a changed secret that must be typed twice doesn't have a matching second entry. */
+fun unconfirmed(page: SettingsPage, changes: Map<String, String>, confirmations: Map<String, String>): Boolean =
+    page.fields.filterIsInstance<SettingField.Secret>().any {
+        it.requiresConfirmation && it.key in changes && confirmations[it.key] != changes[it.key]
     }
-    is SettingField.Text -> if (field.maxLength != null && value.length > field.maxLength!!) "Too long" else null
+
+/** What [localError] found; the screen turns it into text. */
+sealed interface LocalError {
+    data class OutOfRange(val min: Long, val max: Long) : LocalError
+    data object TooLong : LocalError
+    data class TooShort(val minLength: Int) : LocalError
+    data class OverLength(val maxLength: Int) : LocalError
+    data class TooManyRows(val max: Int, val itemName: String) : LocalError
+}
+
+/** Client-side hint shown while typing. The extension re-validates everything before sending. */
+fun localError(field: SettingField, value: String): LocalError? = when (field) {
+    is SettingField.Number -> value.trim().toLongOrNull().let { n ->
+        if (n == null || n < field.min || n > field.max) LocalError.OutOfRange(field.min, field.max) else null
+    }
+    is SettingField.Text -> if (field.maxLength != null && value.length > field.maxLength!!) LocalError.TooLong else null
     is SettingField.Secret -> when {
         value.isEmpty() -> null
-        value.length < field.minLength -> "At least ${field.minLength} characters"
-        field.maxLength != null && value.length > field.maxLength!! -> "At most ${field.maxLength} characters"
+        value.length < field.minLength -> LocalError.TooShort(field.minLength)
+        field.maxLength != null && value.length > field.maxLength!! -> LocalError.OverLength(field.maxLength!!)
         else -> null
     }
     is SettingField.Table -> {
         val max = field.maxRows
-        if (max != null && TableCodec.decode(value).size > max) "At most $max ${field.itemName}s" else null
+        if (max != null && TableCodec.decode(value).size > max) LocalError.TooManyRows(max, field.itemName) else null
     }
     else -> null
 }

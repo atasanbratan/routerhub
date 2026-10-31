@@ -28,6 +28,7 @@ android {
         applicationId = "dev.routerhub"
         minSdk = 28 // PackageInfo.signingInfo / GET_SIGNING_CERTIFICATES
         targetSdk = 36
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = 1
         versionName = "0.1.0"
         buildConfigField("String", "OFFICIAL_EXTENSION_SIGNERS", "\"$officialSigners\"")
@@ -119,6 +120,12 @@ dependencies {
     "playImplementation"(libs.jsch)
 
     testImplementation(libs.junit)
+    testImplementation(libs.org.json) // android.jar's org.json is only stubs in unit tests
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.runner)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
 
 // Fail early, with the fix, instead of with hundreds of unresolved references.

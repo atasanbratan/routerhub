@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -78,10 +79,10 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About") },
+                title = { Text(stringResource(R.string.about)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -94,21 +95,21 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 RouterCover(size = 72.dp)
-                Text("RouterHub", style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             }
             HorizontalDivider()
 
             AboutItem(
-                title = "Version",
+                title = stringResource(R.string.version),
                 subtitle = versionLabel(),
                 onClick = {
-                    copyToClipboard(context, "Debug information", debugInfo())
-                    Toast.makeText(context, "Debug information copied", Toast.LENGTH_SHORT).show()
+                    copyToClipboard(context, context.getString(R.string.debug_info), debugInfo())
+                    Toast.makeText(context, R.string.debug_info_copied, Toast.LENGTH_SHORT).show()
                 },
             )
             // Play delivers its own updates, like Mihon's non-GitHub builds.
             if (BuildConfig.UPDATE_CHECKER) AboutItem(
-                title = "Check for updates",
+                title = stringResource(R.string.check_for_updates),
                 trailing = {
                     AnimatedVisibility(checking) { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp) }
                 },
@@ -120,12 +121,12 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
                                 when (val result = checker.check()) {
                                     is UpdateResult.NewUpdate -> newRelease = result.release
                                     UpdateResult.NoNewUpdate ->
-                                        Toast.makeText(context, "No new updates available", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, R.string.no_new_updates, Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Couldn't check for updates: ${e.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.update_check_failed, e.message), Toast.LENGTH_LONG).show()
                             } finally {
                                 checking = false
                             }
@@ -134,22 +135,22 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
                 },
             )
             if (!BuildConfig.DEBUG) {
-                AboutItem(title = "What's new", onClick = { uriHandler.openUri(RELEASE_URL) })
+                AboutItem(title = stringResource(R.string.whats_new), onClick = { uriHandler.openUri(RELEASE_URL) })
             }
-            AboutItem(title = "Open source licenses", onClick = onOpenLicenses)
-            AboutItem(title = "Privacy policy", onClick = { uriHandler.openUri(PRIVACY_URL) })
+            AboutItem(title = stringResource(R.string.licenses), onClick = onOpenLicenses)
+            AboutItem(title = stringResource(R.string.privacy_policy), onClick = { uriHandler.openUri(PRIVACY_URL) })
 
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center,
             ) {
                 IconButton(onClick = { uriHandler.openUri(BuildConfig.WEBSITE_URL) }) {
-                    Icon(Icons.Outlined.Public, contentDescription = "Website", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Outlined.Public, contentDescription = stringResource(R.string.website), tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = { uriHandler.openUri(GITHUB_URL) }) {
                     Icon(
                         painterResource(R.drawable.ic_github),
-                        contentDescription = "GitHub",
+                        contentDescription = stringResource(R.string.github),
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
@@ -190,7 +191,7 @@ private fun AboutItem(
 private fun NewUpdateDialog(release: AppRelease, onDownload: () -> Unit, onOpenRelease: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New version available") },
+        title = { Text(stringResource(R.string.new_version)) },
         text = {
             Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
                 Text("v${release.version}", style = MaterialTheme.typography.titleMedium)
@@ -200,12 +201,12 @@ private fun NewUpdateDialog(release: AppRelease, onDownload: () -> Unit, onOpenR
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 TextButton(onClick = onOpenRelease, modifier = Modifier.padding(top = 8.dp)) {
-                    Text("Open on GitHub")
+                    Text(stringResource(R.string.open_on_github))
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDownload) { Text("Download") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Not now") } },
+        confirmButton = { TextButton(onClick = onDownload) { Text(stringResource(R.string.download)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.not_now)) } },
     )
 }
 
@@ -231,8 +232,11 @@ private fun releaseNotes(markdown: String): AnnotatedString = buildAnnotatedStri
     }
 }
 
-private fun versionLabel(): String =
-    if (BuildConfig.DEBUG) "Debug ${BuildConfig.VERSION_NAME}" else "Stable v${BuildConfig.VERSION_NAME}"
+@Composable
+private fun versionLabel(): String = stringResource(
+    if (BuildConfig.DEBUG) R.string.version_debug else R.string.version_stable,
+    BuildConfig.VERSION_NAME,
+)
 
 private fun debugInfo(): String = buildString {
     appendLine(

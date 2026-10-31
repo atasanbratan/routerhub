@@ -29,6 +29,13 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
 
     fun delete(id: String) = save(_profiles.value.filterNot { it.id == id })
 
+    /** Adds the routers not saved yet; returns how many that was. */
+    fun addImported(imported: List<RouterProfile>): Int {
+        val added = ProfileTransfer.newOnes(imported, _profiles.value)
+        if (added.isNotEmpty()) save(_profiles.value + added)
+        return added.size
+    }
+
     private fun save(profiles: List<RouterProfile>) {
         _profiles.value = profiles
         prefs.edit { putString(KEY, JSONArray(profiles.map(::toJson)).toString()) }
@@ -53,6 +60,7 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         .put("password", cipher.encrypt(p.password))
         .put("useHttps", p.useHttps)
         .put("hostKey", p.hostKeyFingerprint ?: JSONObject.NULL)
+        .put("passwordNeeded", p.passwordNeeded)
 
     private fun fromJson(o: JSONObject) = RouterProfile(
         id = o.getString("id"),
@@ -67,6 +75,7 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         password = runCatching { cipher.decrypt(o.getString("password")) }.getOrDefault(""),
         useHttps = o.optBoolean("useHttps"),
         hostKeyFingerprint = o.optString("hostKey").takeIf { it.isNotEmpty() && !o.isNull("hostKey") },
+        passwordNeeded = o.optBoolean("passwordNeeded"),
     )
 
     private companion object {

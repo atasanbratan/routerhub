@@ -29,10 +29,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.extension.ExtensionState
 import dev.routerhub.app.extension.TrustLevel
 import dev.routerhub.app.ui.components.EmptyScreen
@@ -50,10 +53,10 @@ fun BrowseScreen(container: AppContainer, onAddRouter: (firmwareId: String) -> U
         contentWindowInsets = WindowInsets(0),
         topBar = {
             Column {
-                TopAppBar(title = { Text("Browse") })
+                TopAppBar(title = { Text(stringResource(R.string.browse)) })
                 PrimaryTabRow(selectedTabIndex = tab) {
-                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Firmwares") })
-                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Extensions") })
+                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.firmwares)) })
+                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.extensions)) })
                 }
             }
         },
@@ -70,7 +73,7 @@ fun BrowseScreen(container: AppContainer, onAddRouter: (firmwareId: String) -> U
 private fun FirmwaresTab(extensions: List<ExtensionState>, onAddRouter: (String) -> Unit, modifier: Modifier) {
     val loaded = extensions.filterIsInstance<ExtensionState.Loaded>()
     if (loaded.isEmpty()) {
-        EmptyScreen("No firmwares yet.\nInstall a router extension to add support for your router.", modifier)
+        EmptyScreen(stringResource(R.string.no_firmwares), modifier)
         return
     }
     LazyColumn(modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
@@ -100,7 +103,7 @@ private fun FirmwaresTab(extensions: List<ExtensionState>, onAddRouter: (String)
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         Text(
-                            "${factory.capabilities.size} features",
+                            pluralStringResource(R.plurals.firmware_features, factory.capabilities.size, factory.capabilities.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -119,7 +122,7 @@ private fun ExtensionsTab(
     modifier: Modifier,
 ) {
     if (extensions.isEmpty()) {
-        EmptyScreen("No extensions installed.", modifier)
+        EmptyScreen(stringResource(R.string.no_extensions), modifier)
         return
     }
     LazyColumn(modifier, contentPadding = PaddingValues(vertical = 8.dp)) {
@@ -142,14 +145,14 @@ private fun ExtensionsTab(
                     )
                     if (state is ExtensionState.Untrusted) {
                         Text(
-                            "SHA-256 ${state.info.signerSha256.firstOrNull()?.take(16) ?: "unsigned"}…",
+                            stringResource(R.string.extension_signer, state.info.signerSha256.firstOrNull()?.take(16) ?: stringResource(R.string.extension_unsigned)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
                 if (state is ExtensionState.Untrusted) {
-                    TextButton(onClick = { onTrust(state) }) { Text("Trust") }
+                    TextButton(onClick = { onTrust(state) }) { Text(stringResource(R.string.trust)) }
                 } else if (state is ExtensionState.Loaded) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         state.factories.map { it.protocol }.distinct().forEach { ProtocolBadge(it) }
@@ -160,14 +163,15 @@ private fun ExtensionsTab(
     }
 }
 
+@Composable
 private fun statusLine(state: ExtensionState): String = when (state) {
     is ExtensionState.Loaded -> when (state.trust) {
-        TrustLevel.OFFICIAL -> "Official"
-        TrustLevel.DEVELOPMENT -> "Development build"
-        TrustLevel.USER_TRUSTED -> "Trusted by you"
-        TrustLevel.BUILT_IN -> "Built in"
+        TrustLevel.OFFICIAL -> stringResource(R.string.trust_official)
+        TrustLevel.DEVELOPMENT -> stringResource(R.string.trust_development)
+        TrustLevel.USER_TRUSTED -> stringResource(R.string.trust_user)
+        TrustLevel.BUILT_IN -> stringResource(R.string.trust_built_in)
     }
-    is ExtensionState.Untrusted -> "Untrusted: unknown signer"
+    is ExtensionState.Untrusted -> stringResource(R.string.trust_unknown)
     is ExtensionState.Incompatible -> state.reason
-    is ExtensionState.Failed -> "Failed to load: ${state.error.message ?: state.error::class.java.simpleName}"
+    is ExtensionState.Failed -> stringResource(R.string.extension_failed, state.error.message ?: state.error::class.java.simpleName)
 }

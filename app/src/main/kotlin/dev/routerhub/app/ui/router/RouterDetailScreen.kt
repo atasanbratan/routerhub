@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -35,11 +36,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -59,7 +62,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -75,6 +82,8 @@ import dev.routerhub.api.RouterStatus
 import dev.routerhub.api.WifiBand
 import dev.routerhub.api.WifiRadio
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
+import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.InfoRow
 import dev.routerhub.app.ui.components.ProtocolBadge
@@ -107,6 +116,7 @@ fun RouterDetailScreen(
     var confirmReboot by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmWifiOff by remember { mutableStateOf<WifiRadio?>(null) }
+    var askPassword by remember { mutableStateOf(true) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -125,22 +135,22 @@ fun RouterDetailScreen(
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back") }
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back)) }
                 },
                 actions = {
                     IconButton(onClick = viewModel::refresh, enabled = factory != null && !state.refreshing) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
                     }
-                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more)) }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
-                            text = { Text("Edit router") },
+                            text = { Text(stringResource(R.string.edit_router)) },
                             leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                             enabled = profile != null,
                             onClick = { menuOpen = false; onEdit() },
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete router") },
+                            text = { Text(stringResource(R.string.delete_router)) },
                             leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
                             onClick = { menuOpen = false; confirmDelete = true },
                         )
@@ -150,12 +160,19 @@ fun RouterDetailScreen(
         },
     ) { padding ->
         when {
-            profile == null -> EmptyScreen("This router no longer exists.", Modifier.padding(padding))
+            profile == null -> EmptyScreen(stringResource(R.string.router_gone), Modifier.padding(padding))
             factory == null && state.extensionsReady -> EmptyScreen(
-                "The extension for this router (${profile.firmwareId}) isn't installed or isn't trusted.",
+                stringResource(R.string.detail_extension_missing, profile.firmwareId),
                 Modifier.padding(padding),
             )
             factory == null -> Unit // still scanning extensions
+            profile.passwordNeeded -> EmptyScreen(
+                stringResource(R.string.password_needed, profile.name),
+                Modifier.padding(padding),
+                action = {
+                    FilledTonalButton(onClick = { askPassword = true }) { Text(stringResource(R.string.enter_password)) }
+                },
+            )
             else -> PullToRefreshBox(
                 isRefreshing = state.refreshing,
                 onRefresh = viewModel::refresh,
@@ -197,7 +214,7 @@ fun RouterDetailScreen(
                     state.status?.let { status -> overviewSection(status) }
                     state.dsl?.let { dsl -> dslSection(dsl) }
                     state.status?.wifiRadios?.takeIf { it.isNotEmpty() }?.let { radios ->
-                        item { SectionHeader("Wi-Fi") }
+                        item { SectionHeader(stringResource(R.string.wifi)) }
                         items(radios, key = { "radio:${it.id}" }) { radio ->
                             WifiRow(
                                 radio = radio,
@@ -209,7 +226,7 @@ fun RouterDetailScreen(
                         }
                     }
                     state.settingsPages.groupBy { it.group }.forEach { (group, pages) ->
-                        item(key = "settings-header:$group") { SectionHeader("$group settings") }
+                        item(key = "settings-header:$group") { SectionHeader(stringResource(R.string.settings_group, group)) }
                         items(pages, key = { "settings:${it.id}" }) { page ->
                             ListItem(
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -223,11 +240,11 @@ fun RouterDetailScreen(
                         }
                     }
                     state.clients?.let { clients ->
-                        item { SectionHeader("Clients (${clients.size})") }
+                        item { SectionHeader(pluralStringResource(R.plurals.clients_header, clients.size, clients.size)) }
                         if (clients.isEmpty()) {
                             item {
                                 Text(
-                                    "No devices connected right now",
+                                    stringResource(R.string.no_clients),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -243,46 +260,72 @@ fun RouterDetailScreen(
 
     if (confirmReboot) {
         ConfirmDialog(
-            title = "Reboot router?",
-            text = "Everyone on this network will lose connection for a minute or two.",
-            confirm = "Reboot",
+            title = stringResource(R.string.reboot_title),
+            text = stringResource(R.string.reboot_text),
+            confirm = stringResource(R.string.reboot),
             onConfirm = { confirmReboot = false; viewModel.reboot() },
             onDismiss = { confirmReboot = false },
         )
     }
     confirmWifiOff?.let { radio ->
         ConfirmDialog(
-            title = "Turn off Wi-Fi?",
-            text = "Devices on \"${radio.ssid ?: radio.id}\" will disconnect, including this phone if it uses that network. " +
-                "You may need a wired connection to turn it back on.",
-            confirm = "Turn off",
+            title = stringResource(R.string.wifi_off_title),
+            text = stringResource(R.string.wifi_off_text, radio.ssid ?: radio.id),
+            confirm = stringResource(R.string.turn_off),
             onConfirm = { confirmWifiOff = null; viewModel.setWifiEnabled(radio.id, false) },
             onDismiss = { confirmWifiOff = null },
         )
     }
     if (confirmDelete) {
         ConfirmDialog(
-            title = "Delete router?",
-            text = "Its saved address and credentials are removed from this device.",
-            confirm = "Delete",
+            title = stringResource(R.string.delete_title),
+            text = stringResource(R.string.delete_text),
+            confirm = stringResource(R.string.delete),
             onConfirm = { confirmDelete = false; viewModel.delete(); onBack() },
             onDismiss = { confirmDelete = false },
         )
     }
+    if (askPassword && profile?.passwordNeeded == true && factory != null) {
+        PasswordDialog(profile, onSave = viewModel::setPassword, onDismiss = { askPassword = false })
+    }
     state.hostKeyPrompt?.let { fingerprint ->
         AlertDialog(
             onDismissRequest = viewModel::dismissHostKey,
-            title = { Text("Trust this router?") },
+            title = { Text(stringResource(R.string.host_key_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("First connection to ${profile?.host}. Check that this SSH host key matches your router:")
+                    Text(stringResource(R.string.host_key_text, profile?.host.orEmpty()))
                     Text(fingerprint, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            confirmButton = { TextButton(onClick = viewModel::trustHostKey) { Text("Trust") } },
-            dismissButton = { TextButton(onClick = viewModel::dismissHostKey) { Text("Cancel") } },
+            confirmButton = { TextButton(onClick = viewModel::trustHostKey) { Text(stringResource(R.string.trust)) } },
+            dismissButton = { TextButton(onClick = viewModel::dismissHostKey) { Text(stringResource(R.string.cancel)) } },
         )
     }
+}
+
+/** Names the address too: the file an imported router came from may not be the user's own. */
+@Composable
+private fun PasswordDialog(profile: RouterProfile, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var password by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.enter_password)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.password_for, profile.username, profile.host, profile.port))
+                OutlinedTextField(
+                    password, { password = it },
+                    label = { Text(stringResource(R.string.field_password)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(password) }) { Text(stringResource(R.string.connect)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }
 
 @Composable
@@ -309,9 +352,9 @@ private fun Header(
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 val (color, label) = when (online) {
-                    true -> Color(0xFF2E9E5B) to if (wanConnected == false) "Online · internet down" else "Online"
-                    false -> MaterialTheme.colorScheme.error to "Unavailable"
-                    null -> MaterialTheme.colorScheme.outline to "Connecting…"
+                    true -> Color(0xFF2E9E5B) to if (wanConnected == false) stringResource(R.string.status_online_no_internet) else stringResource(R.string.status_online)
+                    false -> MaterialTheme.colorScheme.error to stringResource(R.string.status_unavailable)
+                    null -> MaterialTheme.colorScheme.outline to stringResource(R.string.status_connecting)
                 }
                 StatusDot(color)
                 Text(label, style = MaterialTheme.typography.labelMedium)
@@ -330,9 +373,9 @@ private fun ActionRow(
     onWebUi: () -> Unit,
 ) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
-        ActionButton(Icons.Outlined.Refresh, if (refreshing) "Refreshing" else "Refresh", enabled = !refreshing, onClick = onRefresh)
-        ActionButton(Icons.Outlined.PowerSettingsNew, "Reboot", enabled = canReboot, onClick = onReboot)
-        ActionButton(Icons.Outlined.Public, "Web UI", enabled = true, onClick = onWebUi)
+        ActionButton(Icons.Outlined.Refresh, if (refreshing) stringResource(R.string.refreshing) else stringResource(R.string.refresh), enabled = !refreshing, onClick = onRefresh)
+        ActionButton(Icons.Outlined.PowerSettingsNew, stringResource(R.string.reboot), enabled = canReboot, onClick = onReboot)
+        ActionButton(Icons.Outlined.Public, stringResource(R.string.web_ui), enabled = true, onClick = onWebUi)
     }
 }
 
@@ -365,47 +408,47 @@ private fun ErrorCard(error: String, onRetry: () -> Unit) {
             Icon(Icons.Outlined.ErrorOutline, contentDescription = null)
             Spacer(Modifier.width(12.dp))
             Text(error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-            TextButton(onClick = onRetry) { Text("Retry") }
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
         }
     }
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.overviewSection(status: RouterStatus) {
-    item { SectionHeader("Overview") }
+    item { SectionHeader(stringResource(R.string.overview)) }
     item {
         Column {
-            status.firmwareVersion?.let { InfoRow("Firmware", it) }
-            status.model?.let { InfoRow("Model", it) }
-            status.uptimeSeconds?.let { InfoRow("Uptime", formatUptime(it)) }
-            status.wanConnected?.let { InfoRow("Internet", if (it) "Connected" else "Disconnected") }
-            status.wanIpv4?.let { InfoRow("WAN address", it) }
+            status.firmwareVersion?.let { InfoRow(stringResource(R.string.info_firmware), it) }
+            status.model?.let { InfoRow(stringResource(R.string.info_model), it) }
+            status.uptimeSeconds?.let { InfoRow(stringResource(R.string.info_uptime), formatUptime(it)) }
+            status.wanConnected?.let { InfoRow(stringResource(R.string.info_internet), if (it) stringResource(R.string.connected) else stringResource(R.string.disconnected)) }
+            status.wanIpv4?.let { InfoRow(stringResource(R.string.info_wan), it) }
             status.extras.forEach { (label, value) -> InfoRow(label, value) }
         }
     }
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.dslSection(dsl: DslStats) {
-    item { SectionHeader("DSL line") }
+    item { SectionHeader(stringResource(R.string.dsl_line)) }
     item {
         Column {
             InfoRow(
-                "Line",
+                stringResource(R.string.dsl_line_state),
                 when (dsl.lineState) {
-                    DslLineState.SHOWTIME -> "Connected"
-                    DslLineState.TRAINING -> "Training"
-                    DslLineState.DOWN -> "Down"
-                    DslLineState.UNKNOWN -> "Unknown"
+                    DslLineState.SHOWTIME -> stringResource(R.string.connected)
+                    DslLineState.TRAINING -> stringResource(R.string.dsl_training)
+                    DslLineState.DOWN -> stringResource(R.string.dsl_down)
+                    DslLineState.UNKNOWN -> stringResource(R.string.dsl_unknown)
                 },
             )
             if (dsl.lineState == DslLineState.SHOWTIME) {
-                InfoRow("Speed", "↓ ${formatKbps(dsl.downstreamKbps)}  ↑ ${formatKbps(dsl.upstreamKbps)}")
+                InfoRow(stringResource(R.string.dsl_speed), "↓ ${formatKbps(dsl.downstreamKbps)}  ↑ ${formatKbps(dsl.upstreamKbps)}")
                 val maxDown = dsl.attainableDownstreamKbps
                 val maxUp = dsl.attainableUpstreamKbps
-                if (maxDown != null && maxUp != null) InfoRow("Attainable", "↓ ${formatKbps(maxDown)}  ↑ ${formatKbps(maxUp)}")
-                dsl.snrMarginDownDb?.let { down -> InfoRow("SNR margin", "↓ ${formatDb(down)}  ↑ ${dsl.snrMarginUpDb?.let(::formatDb) ?: "–"}") }
-                dsl.attenuationDownDb?.let { down -> InfoRow("Attenuation", "↓ ${formatDb(down)}  ↑ ${dsl.attenuationUpDb?.let(::formatDb) ?: "–"}") }
+                if (maxDown != null && maxUp != null) InfoRow(stringResource(R.string.dsl_attainable), "↓ ${formatKbps(maxDown)}  ↑ ${formatKbps(maxUp)}")
+                dsl.snrMarginDownDb?.let { down -> InfoRow(stringResource(R.string.dsl_snr), "↓ ${formatDb(down)}  ↑ ${dsl.snrMarginUpDb?.let { formatDb(it) } ?: "–"}") }
+                dsl.attenuationDownDb?.let { down -> InfoRow(stringResource(R.string.dsl_attenuation), "↓ ${formatDb(down)}  ↑ ${dsl.attenuationUpDb?.let { formatDb(it) } ?: "–"}") }
             }
-            dsl.modulation?.let { InfoRow("Mode", it) }
+            dsl.modulation?.let { InfoRow(stringResource(R.string.dsl_mode), it) }
         }
     }
 }
@@ -417,12 +460,15 @@ private fun WifiRow(radio: WifiRadio, canToggle: Boolean, onToggle: (Boolean) ->
         headlineContent = { Text(radio.ssid ?: radio.id) },
         supportingContent = {
             Text(
-                when (radio.band) {
-                    WifiBand.GHZ_2_4 -> "2.4 GHz"
-                    WifiBand.GHZ_5 -> "5 GHz"
-                    WifiBand.GHZ_6 -> "6 GHz"
-                    WifiBand.UNKNOWN -> radio.id
-                } + if (radio.enabled) " · On" else " · Off",
+                stringResource(
+                    if (radio.enabled) R.string.wifi_band_on else R.string.wifi_band_off,
+                    when (radio.band) {
+                        WifiBand.GHZ_2_4 -> stringResource(R.string.band_2_4)
+                        WifiBand.GHZ_5 -> stringResource(R.string.band_5)
+                        WifiBand.GHZ_6 -> stringResource(R.string.band_6)
+                        WifiBand.UNKNOWN -> radio.id
+                    },
+                ),
             )
         },
         leadingContent = { Icon(if (radio.enabled) Icons.Outlined.Wifi else Icons.Outlined.WifiOff, contentDescription = null) },
@@ -451,8 +497,8 @@ private fun ClientRow(client: ConnectedClient) {
         trailingContent = {
             Text(
                 when (client.medium) {
-                    ConnectionMedium.WIRED -> "Wired"
-                    ConnectionMedium.WIRELESS -> "Wi-Fi"
+                    ConnectionMedium.WIRED -> stringResource(R.string.client_wired)
+                    ConnectionMedium.WIRELESS -> stringResource(R.string.wifi)
                     ConnectionMedium.UNKNOWN -> ""
                 },
                 style = MaterialTheme.typography.labelSmall,
@@ -469,6 +515,6 @@ private fun ConfirmDialog(title: String, text: String, confirm: String, onConfir
         title = { Text(title) },
         text = { Text(text) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(confirm) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

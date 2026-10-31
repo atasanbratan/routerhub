@@ -18,6 +18,8 @@ data class RouterProfile(
     val useHttps: Boolean = false,
     /** Pinned SSH host key, set once the user confirmed it (trust on first use). */
     val hostKeyFingerprint: String? = null,
+    /** Imported from a file, which holds no passwords: ask before the first connection. */
+    val passwordNeeded: Boolean = false,
 ) {
     override fun toString() = "RouterProfile(id=$id, name=$name, firmware=$firmwareId, $protocol $host:$port)"
 }

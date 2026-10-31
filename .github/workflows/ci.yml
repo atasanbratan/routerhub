@@ -24,7 +24,7 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v6
       - name: Test router-api and the app, assemble the debug app
-        run: ./gradlew :router-api:test :app:testGithubDebugUnitTest :app:assembleGithubDebug --stacktrace
+        run: ./gradlew :router-api:test :app:testGithubDebugUnitTest :app:assembleGithubDebug :app:assembleGithubDebugAndroidTest --stacktrace
       - uses: actions/upload-artifact@v7
         with:
           name: routerhub-debug-apk

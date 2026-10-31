@@ -1,6 +1,7 @@
 package dev.routerhub.app.ui.router
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -15,6 +16,7 @@ import dev.routerhub.api.RouterStatus
 import dev.routerhub.api.SettingsPageInfo
 import dev.routerhub.api.SshHostKeyUnknownException
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.R
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.data.toConnectionConfig
 import dev.routerhub.app.engine.FirmwareSession
@@ -76,7 +78,7 @@ class RouterDetailViewModel(
                 // First load, an edited address/credential, a newly pinned host key, or a reloaded
                 // extension: all of them need a fresh connection.
                 val config = profile?.toConnectionConfig()
-                if (profile != null && factory != null && (config != loadedConfig || factory !== loadedFactory)) {
+                if (profile != null && factory != null && !profile.passwordNeeded && (config != loadedConfig || factory !== loadedFactory)) {
                     loadedConfig = config
                     loadedFactory = factory
                     _state.update { it.copy(status = null, dsl = null, clients = null, error = null) }
@@ -89,6 +91,7 @@ class RouterDetailViewModel(
     fun refresh() {
         val profile = _state.value.profile ?: return
         val factory = _state.value.factory ?: return
+        if (profile.passwordNeeded) return
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
             _state.update { it.copy(refreshing = true, error = null) }
@@ -106,20 +109,20 @@ class RouterDetailViewModel(
                 throw e
             } catch (e: RouterException) {
                 Log.w(TAG, "Refreshing ${profile.id} failed", e)
-                _state.update { it.copy(error = friendlyError(e)) }
+                _state.update { it.copy(error = friendlyError(container.context, e)) }
             } finally {
                 _state.update { it.copy(refreshing = false) }
             }
         }
     }
 
-    fun reboot() = action(success = "Rebooting. The router will be back in a minute or two") { session ->
+    fun reboot() = action(success = R.string.rebooting) { session ->
         session.reboot()
         container.sessions.release(profileId) // the connection dies with the router
     }
 
     fun setWifiEnabled(radioId: String, enabled: Boolean) =
-        action(success = if (enabled) "Wi-Fi turned on" else "Wi-Fi turned off") { session ->
+        action(success = if (enabled) R.string.wifi_turned_on else R.string.wifi_turned_off) { session ->
             session.setWifiEnabled(radioId, enabled)
             _state.update { it.copy(status = session.status()) }
         }
@@ -133,7 +136,13 @@ class RouterDetailViewModel(
         container.routers.upsert(profile.copy(hostKeyFingerprint = fingerprint))
     }
 
-    fun dismissHostKey() = _state.update { it.copy(hostKeyPrompt = null, error = "Host key not trusted") }
+    fun dismissHostKey() = _state.update { it.copy(hostKeyPrompt = null, error = container.context.getString(R.string.host_key_not_trusted)) }
+
+    /** The password for an imported router. The changed profile triggers the first connection. */
+    fun setPassword(password: String) {
+        val profile = _state.value.profile ?: return
+        container.routers.upsert(profile.copy(password = password, passwordNeeded = false))
+    }
 
     fun messageShown() = _state.update { it.copy(message = null) }
 
@@ -147,18 +156,18 @@ class RouterDetailViewModel(
         container.sessions.release(profileId)
     }
 
-    private fun action(success: String, block: suspend (FirmwareSession) -> Unit) {
+    private fun action(@StringRes success: Int, block: suspend (FirmwareSession) -> Unit) {
         val profile = _state.value.profile ?: return
         val factory = _state.value.factory ?: return
         viewModelScope.launch {
             try {
                 block(container.sessions.obtain(profile, factory))
-                _state.update { it.copy(message = success) }
+                _state.update { it.copy(message = container.context.getString(success)) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: RouterException) {
                 Log.w(TAG, "Action on $profileId failed", e)
-                _state.update { it.copy(message = friendlyError(e)) }
+                _state.update { it.copy(message = friendlyError(container.context, e)) }
             }
         }
     }
