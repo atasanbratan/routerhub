@@ -51,6 +51,18 @@ public data class ConnectedClient @JvmOverloads constructor(
     public val hostname: String? = null,
     public val interfaceName: String? = null,
     public val medium: ConnectionMedium = ConnectionMedium.UNKNOWN,
+    /** A rule on the router keeps this device off the internet. */
+    public val internetBlocked: Boolean = false,
+)
+
+/** Something the router can do for one client, offered by [RouterFirmware.clientActions]. */
+public data class ClientAction @JvmOverloads constructor(
+    /** Passed back to [RouterFirmware.runClientAction]. */
+    public val id: String,
+    public val title: String,
+    public val summary: String? = null,
+    /** When set, the host shows this and asks before running the action. */
+    public val confirmation: String? = null,
 )
 
 public enum class ConnectionMedium { WIRED, WIRELESS, UNKNOWN }

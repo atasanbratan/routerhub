@@ -1,6 +1,8 @@
 package dev.routerhub.app.ui.router
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,16 +12,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Computer
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -37,25 +46,32 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,12 +89,14 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.routerhub.api.Capability
+import dev.routerhub.api.ClientAction
 import dev.routerhub.api.ConnectedClient
 import dev.routerhub.api.ConnectionMedium
 import dev.routerhub.api.DslLineState
 import dev.routerhub.api.DslStats
 import dev.routerhub.api.Protocol
 import dev.routerhub.api.RouterStatus
+import dev.routerhub.api.SettingsPageInfo
 import dev.routerhub.api.WifiBand
 import dev.routerhub.api.WifiRadio
 import dev.routerhub.app.AppContainer
@@ -93,10 +111,11 @@ import dev.routerhub.app.ui.components.StatusDot
 import dev.routerhub.app.ui.formatDb
 import dev.routerhub.app.ui.formatKbps
 import dev.routerhub.app.ui.formatUptime
+import kotlinx.coroutines.launch
 
 /**
- * One router, laid out like Mihon's manga page: a cover-and-title header, a row of actions, then
- * the "chapters": overview, DSL line, Wi-Fi radios and connected clients.
+ * One router, in tabs: Device first, laid out like Mihon's manga page, then Wireless, Clients and the
+ * router's settings by group. A tab appears only when the router has something for it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,85 +192,127 @@ fun RouterDetailScreen(
                     FilledTonalButton(onClick = { askPassword = true }) { Text(stringResource(R.string.enter_password)) }
                 },
             )
-            else -> PullToRefreshBox(
-                isRefreshing = state.refreshing,
-                onRefresh = viewModel::refresh,
-                modifier = Modifier.padding(padding).fillMaxSize(),
-            ) {
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
-                    item {
-                        Header(
-                            name = profile.name,
-                            firmware = if (factory.displayName.startsWith(factory.vendor)) factory.displayName
-                            else "${factory.vendor} ${factory.displayName}",
-                            protocol = profile.protocol,
-                            address = "${profile.host}:${profile.port}",
-                            online = when {
-                                state.error != null -> false
-                                state.status != null -> true
-                                else -> null
+            else -> {
+                val pages = state.settingsPages.groupBy { it.group }
+                val wireless = stringResource(R.string.tab_wireless)
+                val network = stringResource(R.string.tab_network)
+                val firewall = stringResource(R.string.tab_firewall)
+                val system = stringResource(R.string.tab_system)
+                val errorItem: LazyListScope.() -> Unit = {
+                    state.error?.let { error -> item { ErrorCard(error, onRetry = viewModel::refresh) } }
+                }
+                val tabs = buildList {
+                    add(
+                        RouterTab(stringResource(R.string.tab_device)) {
+                            item {
+                                Header(
+                                    name = profile.name,
+                                    firmware = if (factory.displayName.startsWith(factory.vendor)) factory.displayName
+                                    else "${factory.vendor} ${factory.displayName}",
+                                    protocol = profile.protocol,
+                                    address = "${profile.host}:${profile.port}",
+                                    online = when {
+                                        state.error != null -> false
+                                        state.status != null -> true
+                                        else -> null
+                                    },
+                                    wanConnected = state.status?.wanConnected,
+                                )
+                            }
+                            item {
+                                ActionRow(
+                                    refreshing = state.refreshing,
+                                    canReboot = Capability.REBOOT in factory.capabilities,
+                                    onRefresh = viewModel::refresh,
+                                    onReboot = { confirmReboot = true },
+                                    onWebUi = {
+                                        val scheme = if (profile.protocol == Protocol.WEB && profile.useHttps) "https" else "http"
+                                        val port = if (profile.protocol == Protocol.WEB) ":${profile.port}" else ""
+                                        try {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, "$scheme://${profile.host}$port".toUri()))
+                                        } catch (_: ActivityNotFoundException) {
+                                        }
+                                    },
+                                )
+                            }
+                            errorItem()
+                            state.status?.let { status -> overviewSection(status) }
+                            state.dsl?.let { dsl -> dslSection(dsl) }
+                        },
+                    )
+                    val radios = state.status?.wifiRadios.orEmpty()
+                    if (radios.isNotEmpty() || wireless in pages) {
+                        add(
+                            RouterTab(wireless) {
+                                errorItem()
+                                items(radios, key = { "radio:${it.id}" }) { radio ->
+                                    WifiRow(
+                                        radio = radio,
+                                        canToggle = canToggleWifi,
+                                        onToggle = { enabled ->
+                                            if (enabled) viewModel.setWifiEnabled(radio.id, true) else confirmWifiOff = radio
+                                        },
+                                    )
+                                }
+                                settingsItems(pages[wireless].orEmpty(), onOpenSettings)
                             },
-                            wanConnected = state.status?.wanConnected,
                         )
                     }
-                    item {
-                        ActionRow(
-                            refreshing = state.refreshing,
-                            canReboot = Capability.REBOOT in factory.capabilities,
-                            onRefresh = viewModel::refresh,
-                            onReboot = { confirmReboot = true },
-                            onWebUi = {
-                                val scheme = if (profile.protocol == Protocol.WEB && profile.useHttps) "https" else "http"
-                                val port = if (profile.protocol == Protocol.WEB) ":${profile.port}" else ""
-                                try {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, "$scheme://${profile.host}$port".toUri()))
-                                } catch (_: ActivityNotFoundException) {
+                    if (Capability.CONNECTED_CLIENTS in factory.capabilities) {
+                        add(
+                            RouterTab(stringResource(R.string.tab_clients)) {
+                                errorItem()
+                                state.clients?.let { clients ->
+                                    item { SectionHeader(pluralStringResource(R.plurals.clients_header, clients.size, clients.size)) }
+                                    if (clients.isEmpty()) {
+                                        item {
+                                            Text(
+                                                stringResource(R.string.no_clients),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                            )
+                                        }
+                                    }
+                                    items(clients, key = { "client:${it.macAddress}" }) { client ->
+                                        ClientRow(client, onClick = { viewModel.selectClient(client) })
+                                    }
                                 }
                             },
                         )
                     }
-                    state.error?.let { error -> item { ErrorCard(error, onRetry = viewModel::refresh) } }
-                    state.status?.let { status -> overviewSection(status) }
-                    state.dsl?.let { dsl -> dslSection(dsl) }
-                    state.status?.wifiRadios?.takeIf { it.isNotEmpty() }?.let { radios ->
-                        item { SectionHeader(stringResource(R.string.wifi)) }
-                        items(radios, key = { "radio:${it.id}" }) { radio ->
-                            WifiRow(
-                                radio = radio,
-                                canToggle = canToggleWifi,
-                                onToggle = { enabled ->
-                                    if (enabled) viewModel.setWifiEnabled(radio.id, true) else confirmWifiOff = radio
-                                },
+                    // A group of an extension's own gets a tab of its own, after the usual ones.
+                    (listOf(network, firewall, system).filter { it in pages } + (pages.keys - setOf(wireless, network, firewall, system))).forEach { group ->
+                        add(
+                            RouterTab(group) {
+                                errorItem()
+                                settingsItems(pages.getValue(group), onOpenSettings)
+                            },
+                        )
+                    }
+                }
+                val pager = rememberPagerState(pageCount = { tabs.size })
+                val scope = rememberCoroutineScope()
+                Column(Modifier.padding(padding).fillMaxSize()) {
+                    PrimaryScrollableTabRow(selectedTabIndex = pager.currentPage.coerceAtMost(tabs.lastIndex), edgePadding = 8.dp) {
+                        tabs.forEachIndexed { index, tab ->
+                            Tab(
+                                selected = pager.currentPage == index,
+                                onClick = { scope.launch { pager.animateScrollToPage(index) } },
+                                text = { Text(tab.title) },
                             )
                         }
                     }
-                    state.settingsPages.groupBy { it.group }.forEach { (group, pages) ->
-                        item(key = "settings-header:$group") { SectionHeader(stringResource(R.string.settings_group, group)) }
-                        items(pages, key = { "settings:${it.id}" }) { page ->
-                            ListItem(
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                headlineContent = { Text(page.title) },
-                                supportingContent = page.summary?.let { { Text(it) } },
-                                trailingContent = {
-                                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null)
-                                },
-                                modifier = Modifier.clickable { onOpenSettings(page.id) },
-                            )
-                        }
-                    }
-                    state.clients?.let { clients ->
-                        item { SectionHeader(pluralStringResource(R.plurals.clients_header, clients.size, clients.size)) }
-                        if (clients.isEmpty()) {
-                            item {
-                                Text(
-                                    stringResource(R.string.no_clients),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                )
+                    PullToRefreshBox(
+                        isRefreshing = state.refreshing,
+                        onRefresh = viewModel::refresh,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
+                            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
+                                tabs.getOrNull(page)?.content?.invoke(this)
                             }
                         }
-                        items(clients, key = { "client:${it.macAddress}" }) { ClientRow(it) }
                     }
                 }
             }
@@ -287,6 +348,15 @@ fun RouterDetailScreen(
     }
     if (askPassword && profile?.passwordNeeded == true && factory != null) {
         PasswordDialog(profile, onSave = viewModel::setPassword, onDismiss = { askPassword = false })
+    }
+    state.selectedClient?.let { client ->
+        ClientSheet(
+            client = client,
+            actions = state.clientActions,
+            onCopied = viewModel::copied,
+            onRun = { viewModel.runClientAction(client, it) },
+            onDismiss = viewModel::dismissClient,
+        )
     }
     state.hostKeyPrompt?.let { fingerprint ->
         AlertDialog(
@@ -326,6 +396,22 @@ private fun PasswordDialog(profile: RouterProfile, onSave: (String) -> Unit, onD
         confirmButton = { TextButton(onClick = { onSave(password) }) { Text(stringResource(R.string.connect)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
+}
+
+private class RouterTab(val title: String, val content: LazyListScope.() -> Unit)
+
+private fun LazyListScope.settingsItems(pages: List<SettingsPageInfo>, onOpen: (pageId: String) -> Unit) {
+    items(pages, key = { "settings:${it.id}" }) { page ->
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            headlineContent = { Text(page.title) },
+            supportingContent = page.summary?.let { { Text(it) } },
+            trailingContent = {
+                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null)
+            },
+            modifier = Modifier.clickable { onOpen(page.id) },
+        )
+    }
 }
 
 @Composable
@@ -413,7 +499,7 @@ private fun ErrorCard(error: String, onRetry: () -> Unit) {
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.overviewSection(status: RouterStatus) {
+private fun LazyListScope.overviewSection(status: RouterStatus) {
     item { SectionHeader(stringResource(R.string.overview)) }
     item {
         Column {
@@ -427,11 +513,11 @@ private fun androidx.compose.foundation.lazy.LazyListScope.overviewSection(statu
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.dslSection(dsl: DslStats) {
+private fun LazyListScope.dslSection(dsl: DslStats) {
     item { SectionHeader(stringResource(R.string.dsl_line)) }
     item {
         Column {
-            InfoRow(
+        InfoRow(
                 stringResource(R.string.dsl_line_state),
                 when (dsl.lineState) {
                     DslLineState.SHOWTIME -> stringResource(R.string.connected)
@@ -481,8 +567,9 @@ private fun WifiRow(radio: WifiRadio, canToggle: Boolean, onToggle: (Boolean) ->
 }
 
 @Composable
-private fun ClientRow(client: ConnectedClient) {
+private fun ClientRow(client: ConnectedClient, onClick: () -> Unit) {
     ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(client.hostname ?: client.macAddress) },
         supportingContent = {
@@ -496,15 +583,82 @@ private fun ClientRow(client: ConnectedClient) {
         },
         trailingContent = {
             Text(
-                when (client.medium) {
-                    ConnectionMedium.WIRED -> stringResource(R.string.client_wired)
-                    ConnectionMedium.WIRELESS -> stringResource(R.string.wifi)
-                    ConnectionMedium.UNKNOWN -> ""
+                when {
+                    client.internetBlocked -> stringResource(R.string.client_blocked)
+                    client.medium == ConnectionMedium.WIRED -> stringResource(R.string.client_wired)
+                    client.medium == ConnectionMedium.WIRELESS -> stringResource(R.string.wifi)
+                    else -> ""
                 },
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (client.internetBlocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
+    )
+}
+
+/** Copying works on every router. The rest is what the router's extension offers for this client. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ClientSheet(
+    client: ConnectedClient,
+    actions: List<ClientAction>?,
+    onCopied: () -> Unit,
+    onRun: (ClientAction) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    var confirming by remember { mutableStateOf<ClientAction?>(null) }
+    fun copy(label: String, text: String) {
+        context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(label, text))
+        onCopied()
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
+            Text(
+                client.hostname ?: client.macAddress,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            CopyRow(stringResource(R.string.client_copy_mac), client.macAddress) { copy("MAC address", client.macAddress) }
+            client.ipAddress?.let { ip -> CopyRow(stringResource(R.string.client_copy_ip), ip) { copy("IP address", ip) } }
+            client.hostname?.let { name -> CopyRow(stringResource(R.string.client_copy_name), name) { copy("Name", name) } }
+            when {
+                actions == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
+                actions.isNotEmpty() -> HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            }
+            actions.orEmpty().forEach { action ->
+                ListItem(
+                    modifier = Modifier.clickable { if (action.confirmation != null) confirming = action else onRun(action) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = { Text(action.title) },
+                    supportingContent = action.summary?.let { summary -> { Text(summary) } },
+                )
+            }
+        }
+    }
+    confirming?.let { action ->
+        ConfirmDialog(
+            title = action.title,
+            text = action.confirmation.orEmpty(),
+            confirm = stringResource(R.string.client_action_confirm),
+            onConfirm = {
+                confirming = null
+                onRun(action)
+            },
+            onDismiss = { confirming = null },
+        )
+    }
+}
+
+@Composable
+private fun CopyRow(title: String, value: String, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = { Text(title) },
+        supportingContent = { Text(value) },
+        leadingContent = { Icon(Icons.Outlined.ContentCopy, contentDescription = null) },
     )
 }
 

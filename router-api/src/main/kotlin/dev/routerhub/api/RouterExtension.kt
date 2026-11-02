@@ -4,7 +4,7 @@ package dev.routerhub.api
 public enum class Protocol { WEB, SSH, TELNET }
 
 /** Optional features. The UI only offers controls for what a firmware declares. */
-public enum class Capability { STATUS, DSL_STATS, CONNECTED_CLIENTS, REBOOT, WIFI_TOGGLE, SETTINGS }
+public enum class Capability { STATUS, DSL_STATS, CONNECTED_CLIENTS, CLIENT_ACTIONS, REBOOT, WIFI_TOGGLE, SETTINGS }
 
 /**
  * Entry point of an extension APK, named by the `dev.routerhub.extension.class` meta-data.

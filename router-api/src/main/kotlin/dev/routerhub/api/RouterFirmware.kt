@@ -30,6 +30,13 @@ public interface RouterFirmware {
     public suspend fun getConnectedClients(): List<ConnectedClient> =
         unsupported(Capability.CONNECTED_CLIENTS)
 
+    /** What can be done for [client] right now, which can depend on its state. */
+    public suspend fun clientActions(client: ConnectedClient): List<ClientAction> =
+        unsupported(Capability.CLIENT_ACTIONS)
+
+    public suspend fun runClientAction(client: ConnectedClient, actionId: String): Unit =
+        unsupported(Capability.CLIENT_ACTIONS)
+
     public suspend fun reboot(): Unit = unsupported(Capability.REBOOT)
 
     /**

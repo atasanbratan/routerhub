@@ -161,7 +161,7 @@ Open **Browse → Extensions**. An extension signed with the same debug key as y
   app's copies always win, so bundling them only adds dead weight.
 - **`router-api` is append-only.** New model fields go at the end with defaults, new interface methods need
   default bodies, and `API_VERSION` rises when extensions may start relying on something new. An extension
-  compiled against v1 keeps working on a v3 app.
+  compiled against v1 keeps working on a v4 app.
 - **Secrets stay secret.** Never log credentials or return a stored secret to the app. Every `ConnectionConfig`
   redacts its `toString()`; keep it that way for anything you add.
 - **Ids are forever.** Changing a factory `id` orphans every router saved with it.

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.routerhub.api.Capability
+import dev.routerhub.api.ClientAction
 import dev.routerhub.api.ConnectedClient
 import dev.routerhub.api.ConnectionConfig
 import dev.routerhub.api.DslStats
@@ -39,6 +40,10 @@ data class RouterDetailState(
     val status: RouterStatus? = null,
     val dsl: DslStats? = null,
     val clients: List<ConnectedClient>? = null,
+    /** The client whose sheet is open. */
+    val selectedClient: ConnectedClient? = null,
+    /** What the router offers for [selectedClient]; `null` while asking. */
+    val clientActions: List<ClientAction>? = null,
     val settingsPages: List<SettingsPageInfo> = emptyList(),
     val error: String? = null,
     /** SSH first contact: fingerprint waiting for the user's confirmation. */
@@ -119,6 +124,39 @@ class RouterDetailViewModel(
     fun reboot() = action(success = R.string.rebooting) { session ->
         session.reboot()
         container.sessions.release(profileId) // the connection dies with the router
+    }
+
+    fun selectClient(client: ConnectedClient) {
+        _state.update { it.copy(selectedClient = client, clientActions = null) }
+        val profile = _state.value.profile ?: return
+        val factory = _state.value.factory ?: return
+        if (Capability.CLIENT_ACTIONS !in factory.capabilities) {
+            _state.update { it.copy(clientActions = emptyList()) }
+            return
+        }
+        viewModelScope.launch {
+            val actions = try {
+                container.sessions.obtain(profile, factory).clientActions(client)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: RouterException) {
+                Log.w(TAG, "Reading the actions of a client failed", e)
+                emptyList()
+            }
+            _state.update { if (it.selectedClient == client) it.copy(clientActions = actions) else it }
+        }
+    }
+
+    fun dismissClient() = _state.update { it.copy(selectedClient = null, clientActions = null) }
+
+    fun copied() = _state.update { it.copy(message = container.context.getString(R.string.copied)) }
+
+    fun runClientAction(client: ConnectedClient, action: ClientAction) {
+        _state.update { it.copy(selectedClient = null, clientActions = null, message = container.context.getString(R.string.client_action_running)) }
+        action(success = R.string.client_action_done) { session ->
+            session.runClientAction(client, action.id)
+            _state.update { it.copy(clients = session.connectedClients()) }
+        }
     }
 
     fun setWifiEnabled(radioId: String, enabled: Boolean) =

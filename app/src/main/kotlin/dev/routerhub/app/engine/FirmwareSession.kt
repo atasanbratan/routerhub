@@ -1,6 +1,7 @@
 package dev.routerhub.app.engine
 
 import dev.routerhub.api.Capability
+import dev.routerhub.api.ClientAction
 import dev.routerhub.api.ConnectedClient
 import dev.routerhub.api.ConnectionConfig
 import dev.routerhub.api.DslStats
@@ -62,6 +63,12 @@ class FirmwareSession private constructor(
     suspend fun dslStats(): DslStats = call { it.getDslStats() }
 
     suspend fun connectedClients(): List<ConnectedClient> = call { it.getConnectedClients() }
+
+    suspend fun clientActions(client: ConnectedClient): List<ClientAction> = call { it.clientActions(client) }
+
+    /** Like [writeSettings], never replayed. */
+    suspend fun runClientAction(client: ConnectedClient, actionId: String): Unit =
+        mutex.withLock { guard { firmware.runClientAction(client, actionId) } }
 
     suspend fun reboot(): Unit = call { it.reboot() }
 

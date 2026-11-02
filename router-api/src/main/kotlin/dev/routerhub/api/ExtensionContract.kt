@@ -19,9 +19,9 @@ public object ExtensionContract {
     /**
      * Bump whenever extensions may start relying on something new in this module, so older hosts
      * refuse them instead of failing at runtime. v2 added settings pages and the TELNET protocol;
-     * v3 added editable list fields (`SettingField.Table`).
+     * v3 added editable list fields (`SettingField.Table`); v4 added client actions.
      */
-    public const val API_VERSION: Int = 3
+    public const val API_VERSION: Int = 4
 
     /** Oldest extension API version the current host can still load. */
     public const val MIN_SUPPORTED_API_VERSION: Int = 1
