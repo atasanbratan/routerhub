@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import dev.routerhub.api.ExtensionContract
 import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.app.BuildConfig
+import dev.routerhub.app.basic.BasicExtension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
+private val BASIC = BundledExtension("dev.routerhub.basic", "Basic mode") { BasicExtension() }
 
 /**
  * Single source of truth for installed extensions. Rescans whenever a package is installed,
@@ -58,8 +61,7 @@ class ExtensionManager(
         }
         scope.launch(Dispatchers.IO) {
             for (request in rescanRequests) {
-                _extensions.value = discovery.findInstalled()
-                    .map(loader::load)
+                _extensions.value = (bundled() + discovery.findInstalled().map(loader::load))
                     .sortedBy { it.info.label.lowercase() }
                 _ready.value = true
             }
@@ -68,7 +70,8 @@ class ExtensionManager(
         rescan()
     }
 
-    private fun bundled(): List<ExtensionState> = bundledExtensions.map { bundle ->
+    /** Basic mode is part of the app, so every build has it; the Play build adds the official extensions. */
+    private fun bundled(): List<ExtensionState> = (bundledExtensions + BASIC).map { bundle ->
         val info = ExtensionInfo(
             packageName = bundle.packageName,
             label = bundle.label,

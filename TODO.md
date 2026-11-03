@@ -53,7 +53,7 @@ Connect → recognise devices → change settings safely → block → unblock �
 - [x] Pause (1 hour), resume and schedules per device on OpenWrt, tested in VMs on 21.02 and 23.05
 - [ ] The same for Tenda and TP-Link, if their firmware has time rules (needs the hardware)
 - [x] App lock with the phone's fingerprint, face or screen lock (unlocking not tried yet: the emulator has no screen lock)
-- [ ] Basic mode for unsupported routers, clearly labelled as limited
+- [x] Basic mode for unsupported routers, clearly labelled as limited (reachability, what the login page says, web page, support request link)
 
 ## Update 0.4 and later
 - [ ] More routers, chosen from user requests and hardware we can test (candidates: TP-Link, ZTE, Huawei, MiFi)

@@ -266,4 +266,8 @@
     <string name="lock_title">RouterHub terkunci</string>
     <string name="lock_unlock">Buka kunci</string>
     <string name="lock_prompt">Buka kunci RouterHub</string>
+    <string name="basic_no_login">Mode dasar tidak login, jadi tidak memerlukan nama pengguna atau kata sandi.</string>
+    <string name="basic_title">Mode dasar</string>
+    <string name="basic_text">RouterHub belum bisa membaca atau mengubah setelan router ini. Aplikasi hanya memeriksa bahwa router menjawab, dan membuka halaman webnya.</string>
+    <string name="basic_request">Minta dukungan untuk router ini</string>
 </resources>

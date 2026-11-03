@@ -282,4 +282,8 @@
     <string name="lock_title">O RouterHub está bloqueado</string>
     <string name="lock_unlock">Desbloquear</string>
     <string name="lock_prompt">Desbloquear o RouterHub</string>
+    <string name="basic_no_login">O modo básico não faz login, então não precisa de usuário nem senha.</string>
+    <string name="basic_title">Modo básico</string>
+    <string name="basic_text">O RouterHub ainda não consegue ler nem mudar as configurações deste roteador. Ele só verifica se o roteador responde e abre a página dele.</string>
+    <string name="basic_request">Pedir suporte para este roteador</string>
 </resources>

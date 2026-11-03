@@ -52,6 +52,7 @@ import dev.routerhub.api.Protocol
 import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
+import dev.routerhub.app.basic.BasicFactory
 import dev.routerhub.app.data.FoundRouter
 import dev.routerhub.app.data.RouterFinder
 import dev.routerhub.app.data.RouterProfile
@@ -249,8 +250,12 @@ private fun ConnectionForm(
                 modifier = Modifier.weight(0.32f),
             )
         }
-        OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.field_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(
+        val logsIn = factory.id != BasicFactory.ID
+        if (!logsIn) {
+            Text(stringResource(R.string.basic_no_login), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (logsIn) OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.field_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        if (logsIn) OutlinedTextField(
             password, { password = it },
             label = { Text(if (existing != null) stringResource(R.string.field_new_password) else stringResource(R.string.field_admin_password)) },
             supportingText = {
@@ -269,7 +274,7 @@ private fun ConnectionForm(
             },
             modifier = Modifier.fillMaxWidth(),
         )
-        TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.login_help_button)) }
+        if (logsIn) TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.login_help_button)) }
         if (factory.protocol == Protocol.WEB) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.use_https), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
@@ -279,7 +284,7 @@ private fun ConnectionForm(
                 })
             }
         }
-        Text(
+        if (logsIn) Text(
             stringResource(R.string.password_encryption_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

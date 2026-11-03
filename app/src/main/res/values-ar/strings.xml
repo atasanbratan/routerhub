@@ -306,4 +306,8 @@
     <string name="lock_title">RouterHub مقفل</string>
     <string name="lock_unlock">فتح القفل</string>
     <string name="lock_prompt">فتح قفل RouterHub</string>
+    <string name="basic_no_login">الوضع الأساسي لا يسجّل الدخول، لذا لا يحتاج إلى اسم مستخدم أو كلمة مرور.</string>
+    <string name="basic_title">الوضع الأساسي</string>
+    <string name="basic_text">لا يستطيع RouterHub بعدُ قراءة إعدادات هذا الراوتر أو تغييرها. هو يتحقق فقط من أن الراوتر يرد، ويفتح صفحته.</string>
+    <string name="basic_request">طلب دعم هذا الراوتر</string>
 </resources>

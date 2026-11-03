@@ -71,6 +71,7 @@ lives in memory.
 |---|---|
 | **Overview** | Model, firmware, uptime, WAN state and address, DSL line quality, Wi-Fi radios with a quick switch, and the devices on your network. Reboot, or jump to the router's own web page. |
 | **Your devices** | Name devices and mark the ones you know, see which ones answer right now, and block, allow or reserve an address where the router supports it. Optional alerts tell you when a device this phone has never seen joins your network. |
+| **Basic mode** | For a router no extension supports yet: the app checks that it answers, reads what its login page says about it, opens its web page, and links to a support request. Clearly marked as limited. |
 | **Settings pages** | The extension describes each page as typed fields: switches, text, passwords, numbers, choices and editable lists. The app renders them as a form and sends back **only what you changed**. |
 | **Safeguards** | Extensions can refuse dangerous changes before anything is sent, and the app shows the reason right under the field. A save is never silently replayed, so a flaky link cannot apply a change twice. |
 | **Three protocols** | `WEB` (HTTP admin pages), `SSH` (host keys pinned on first use) and `TELNET` for old routers that have nothing better. One extension can offer the same router over several. |

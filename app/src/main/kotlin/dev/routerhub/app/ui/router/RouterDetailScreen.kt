@@ -63,6 +63,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
@@ -118,6 +119,7 @@ import dev.routerhub.api.WifiRadio
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
 import dev.routerhub.app.alerts.NewDeviceAlerts
+import dev.routerhub.app.basic.BasicFactory
 import dev.routerhub.app.data.DeviceBook
 import dev.routerhub.app.data.DeviceRow
 import dev.routerhub.app.data.DeviceState
@@ -267,6 +269,16 @@ fun RouterDetailScreen(
                                         }
                                     },
                                 )
+                            }
+                            if (factory.id == BasicFactory.ID) {
+                                item {
+                                    BasicModeCard(onRequest = {
+                                        try {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, BasicFactory.SUPPORT_REQUEST_URL.toUri()))
+                                        } catch (_: ActivityNotFoundException) {
+                                        }
+                                    })
+                                }
                             }
                             errorItem()
                             state.status?.let { status -> overviewSection(status) }
@@ -691,6 +703,18 @@ private fun ClientRow(row: DeviceRow, answersPing: Boolean, onClick: () -> Unit)
             )
         },
     )
+}
+
+/** Says plainly what basic mode can't do, and where to ask for real support. */
+@Composable
+private fun BasicModeCard(onRequest: () -> Unit) {
+    OutlinedCard(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.basic_title), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.basic_text), style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = onRequest, contentPadding = PaddingValues(0.dp)) { Text(stringResource(R.string.basic_request)) }
+        }
+    }
 }
 
 /** Opt-in for background checks that notify about devices this phone has never seen on the router. */

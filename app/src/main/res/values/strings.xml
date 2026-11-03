@@ -279,4 +279,8 @@
     <string name="lock_title">RouterHub is locked</string>
     <string name="lock_unlock">Unlock</string>
     <string name="lock_prompt">Unlock RouterHub</string>
+    <string name="basic_no_login">Basic mode doesn\'t log in, so it needs no username or password.</string>
+    <string name="basic_title">Basic mode</string>
+    <string name="basic_text">RouterHub can\'t read or change this router\'s settings yet. It only checks that the router answers, and opens its web page.</string>
+    <string name="basic_request">Ask for support for this router</string>
 </resources>
