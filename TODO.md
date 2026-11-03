@@ -46,7 +46,7 @@ Connect → recognise devices → change settings safely → block → unblock �
 ## Update 0.3: reasons to come back
 - [x] Stop relying on English text: stable group ids for tabs, translatable extension text (API v5)
 - [x] App translations: Spanish, Indonesian, Portuguese, Arabic; right-to-left checked in Arabic (needs a native speaker's review)
-- [ ] Extension translations (i18n/*.json in each extension): page and field names still show in English
+- [x] Extension translations in the same four languages (needs a native speaker's review; text built at run time stays English)
 - [x] Online badge on clients that answer ping, every 5 seconds while the Clients tab is open (try it on a real phone)
 - [ ] New-device alerts, on the home network only (about every 15 minutes)
 - [ ] Connection history, stating that it only covers what the app has seen

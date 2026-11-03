@@ -1,6 +1,7 @@
 package dev.routerhub.app.extension
 
 import dalvik.system.PathClassLoader
+import java.net.URL
 
 /**
  * Class loader for one extension APK, with *selective* delegation.
@@ -45,6 +46,9 @@ internal class ExtensionClassLoader(
             }
         }
     }
+
+    /** Child-first too, so an extension's own files (its translations) win over anything of the host's. */
+    override fun getResource(name: String): URL? = findResource(name) ?: super.getResource(name)
 
     companion object {
         /**

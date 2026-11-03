@@ -56,6 +56,8 @@ android {
 
     sourceSets.getByName("play") {
         kotlin.srcDirs(bundledExtensions.map { extensionsCheckout.resolve("extensions/$it/src/main/kotlin") })
+        // Their translations (i18n/*.json next to each factory class).
+        resources.srcDirs(bundledExtensions.map { extensionsCheckout.resolve("extensions/$it/src/main/resources") })
     }
 
     signingConfigs {

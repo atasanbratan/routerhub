@@ -6,6 +6,10 @@
 -keep class kotlinx.coroutines.** { *; }
 -keep class okhttp3.** { *; }
 -keep class okio.** { *; }
+
+# An extension's translations are found next to its factory class (ExtensionText), so the bundled
+# factories must keep their package and name.
+-keepnames class * implements dev.routerhub.api.RouterFirmwareFactory
 -keepattributes Signature,InnerClasses,EnclosingMethod,Exceptions,*Annotation*
 
 # Optional TLS providers OkHttp probes for reflectively.
