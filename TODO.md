@@ -50,7 +50,8 @@ Connect → recognise devices → change settings safely → block → unblock �
 - [x] Online badge on clients that answer ping, every 5 seconds while the Clients tab is open (try it on a real phone)
 - [x] New-device alerts, on the home network only (about every 15 minutes); opt-in per router on the Clients tab (try it on a real phone overnight)
 - [x] Connection history, stating that it only covers what the app has seen (device sheet, 20 visits within 14 days)
-- [ ] Pause, resume and schedules per device, starting on OpenWrt
+- [x] Pause (1 hour), resume and schedules per device on OpenWrt, tested in VMs on 21.02 and 23.05
+- [ ] The same for Tenda and TP-Link, if their firmware has time rules (needs the hardware)
 - [ ] App lock with fingerprint or PIN
 - [ ] Basic mode for unsupported routers, clearly labelled as limited
 
