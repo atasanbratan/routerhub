@@ -270,5 +270,5 @@
     <string name="basic_title">Mode dasar</string>
     <string name="basic_text">RouterHub belum bisa membaca atau mengubah setelan router ini. Aplikasi hanya memeriksa bahwa router menjawab, dan membuka halaman webnya.</string>
     <string name="basic_request">Minta dukungan untuk router ini</string>
-    <string name="tested_tplink_wr">Status dan klien terhubung. Mulai ulang dan halaman setelan belum dicoba di router.</string>
+    <string name="tested_tplink_wr">Status, klien terhubung, mulai ulang, reservasi, penerusan port, DMZ, UPnP, dan pemblokiran lewat filter MAC Wi-Fi.</string>
 </resources>
