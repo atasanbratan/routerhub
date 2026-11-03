@@ -274,4 +274,6 @@
         <item quantity="many">%1$d aparelhos novos em %2$s</item>
         <item quantity="other">%1$d aparelhos novos em %2$s</item>
     </plurals>
+    <string name="history_title">Visto por este app</string>
+    <string name="history_hint">Só os momentos em que este app consultou o roteador: enquanto você o tinha aberto ou durante as verificações de aparelhos novos. O aparelho pode ter ficado conectado em outros momentos também.</string>
 </resources>

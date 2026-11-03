@@ -80,6 +80,8 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         .put("ip", d.ipAddress ?: JSONObject.NULL)
         .put("medium", d.medium.name)
         .put("lastSeen", d.lastSeen ?: JSONObject.NULL)
+        // Pairs of start and end, to keep the file small with 200 devices of 20 visits each.
+        .put("visits", JSONArray(d.visits.flatMap { listOf(it.start, it.end) }))
 
     private fun deviceFromJson(o: JSONObject) = KnownDevice(
         mac = o.getString("mac"),
@@ -89,6 +91,9 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         ipAddress = o.optString("ip").takeIf { it.isNotEmpty() && !o.isNull("ip") },
         medium = ConnectionMedium.entries.firstOrNull { it.name == o.optString("medium") } ?: ConnectionMedium.UNKNOWN,
         lastSeen = if (o.isNull("lastSeen")) null else o.optLong("lastSeen"),
+        visits = o.optJSONArray("visits")?.let { array ->
+            (0 until array.length() / 2).map { Visit(array.getLong(2 * it), array.getLong(2 * it + 1)) }
+        }.orEmpty(),
     )
 
     private fun fromJson(o: JSONObject) = RouterProfile(

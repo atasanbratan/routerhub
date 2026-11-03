@@ -49,7 +49,7 @@ Connect → recognise devices → change settings safely → block → unblock �
 - [x] Extension translations in the same four languages (needs a native speaker's review; text built at run time stays English)
 - [x] Online badge on clients that answer ping, every 5 seconds while the Clients tab is open (try it on a real phone)
 - [x] New-device alerts, on the home network only (about every 15 minutes); opt-in per router on the Clients tab (try it on a real phone overnight)
-- [ ] Connection history, stating that it only covers what the app has seen
+- [x] Connection history, stating that it only covers what the app has seen (device sheet, 20 visits within 14 days)
 - [ ] Pause, resume and schedules per device, starting on OpenWrt
 - [ ] App lock with fingerprint or PIN
 - [ ] Basic mode for unsupported routers, clearly labelled as limited

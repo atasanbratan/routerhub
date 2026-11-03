@@ -298,4 +298,6 @@
         <item quantity="many">%1$d جهازًا جديدًا على %2$s</item>
         <item quantity="other">%1$d جهاز جديد على %2$s</item>
     </plurals>
+    <string name="history_title">ما رآه هذا التطبيق</string>
+    <string name="history_hint">فقط الأوقات التي فحص فيها هذا التطبيق الراوتر: أثناء فتحك له، أو خلال فحوص الأجهزة الجديدة. ربما كان الجهاز متصلًا في أوقات أخرى أيضًا.</string>
 </resources>

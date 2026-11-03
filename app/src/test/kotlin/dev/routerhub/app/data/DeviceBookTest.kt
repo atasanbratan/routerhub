@@ -102,4 +102,40 @@ class DeviceBookTest {
         val away = ConnectedClient("02:00:00:00:00:09", online = false, internetBlocked = true)
         assertTrue(DeviceBook.newDevices(book, listOf(phone, away)).isEmpty())
     }
+
+    private val minute = 60_000L
+
+    @Test
+    fun `sightings close together make one visit, a gap starts a new one`() {
+        var visits = DeviceBook.extendVisits(emptyList(), 0)
+        visits = DeviceBook.extendVisits(visits, 15 * minute)
+        visits = DeviceBook.extendVisits(visits, 30 * minute)
+        assertEquals(listOf(Visit(0, 30 * minute)), visits)
+        visits = DeviceBook.extendVisits(visits, 30 * minute + DeviceBook.VISIT_GAP_MILLIS + 1)
+        assertEquals(2, visits.size)
+        assertEquals(Visit(30 * minute + DeviceBook.VISIT_GAP_MILLIS + 1, 30 * minute + DeviceBook.VISIT_GAP_MILLIS + 1), visits.last())
+    }
+
+    @Test
+    fun `old and surplus visits are dropped`() {
+        val gap = DeviceBook.VISIT_GAP_MILLIS + 1
+        val many = (0 until DeviceBook.MAX_VISITS + 5).fold(emptyList<Visit>()) { visits, i -> DeviceBook.extendVisits(visits, i * gap) }
+        assertEquals(DeviceBook.MAX_VISITS, many.size)
+        assertEquals((DeviceBook.MAX_VISITS + 4) * gap, many.last().end)
+        val later = DeviceBook.extendVisits(many, many.last().end + DeviceBook.KEEP_VISITS_MILLIS + 1)
+        assertEquals(1, later.size)
+    }
+
+    @Test
+    fun `a clock that went back starts a new visit instead of shrinking one`() {
+        val visits = DeviceBook.extendVisits(listOf(Visit(10 * minute, 20 * minute)), 15 * minute)
+        assertEquals(listOf(Visit(10 * minute, 20 * minute), Visit(15 * minute, 15 * minute)), visits)
+    }
+
+    @Test
+    fun `recording clients extends their visits`() {
+        val first = DeviceBook.record(emptyList(), listOf(phone), now = 0)
+        val second = DeviceBook.record(first, listOf(phone), now = 10 * minute)
+        assertEquals(listOf(Visit(0, 10 * minute)), second.single().visits)
+    }
 }

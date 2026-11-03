@@ -274,4 +274,6 @@
         <item quantity="many">%1$d dispositivos nuevos en %2$s</item>
         <item quantity="other">%1$d dispositivos nuevos en %2$s</item>
     </plurals>
+    <string name="history_title">Visto por esta app</string>
+    <string name="history_hint">Solo los momentos en que esta app consultó el router: mientras lo tenías abierto o durante las comprobaciones de dispositivos nuevos. El dispositivo pudo estar conectado también en otros momentos.</string>
 </resources>

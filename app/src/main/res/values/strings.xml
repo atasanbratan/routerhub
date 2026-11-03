@@ -271,4 +271,6 @@
         <item quantity="one">New device on %2$s</item>
         <item quantity="other">%1$d new devices on %2$s</item>
     </plurals>
+    <string name="history_title">Seen by this app</string>
+    <string name="history_hint">Only the times this app looked at the router: while you had it open, or during new-device checks. The device may have been connected at other times too.</string>
 </resources>

@@ -124,6 +124,7 @@ import dev.routerhub.app.data.DeviceState
 import dev.routerhub.app.data.KnownDevice
 import dev.routerhub.app.data.Pinger
 import dev.routerhub.app.data.RouterProfile
+import dev.routerhub.app.data.Visit
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.InfoRow
 import dev.routerhub.app.ui.components.LoginHelpDialog
@@ -775,6 +776,7 @@ private fun ClientSheet(
             CopyRow(stringResource(R.string.client_copy_mac), client.macAddress) { copy("MAC address", client.macAddress) }
             client.ipAddress?.let { ip -> CopyRow(stringResource(R.string.client_copy_ip), ip) { copy("IP address", ip) } }
             client.hostname?.let { name -> CopyRow(stringResource(R.string.client_copy_name), name) { copy("Name", name) } }
+            device?.visits?.takeIf { it.isNotEmpty() }?.let { visits -> VisitHistory(visits) }
             when {
                 actions == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
                 actions.isNotEmpty() -> HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -820,6 +822,32 @@ private fun ClientSheet(
         )
     }
 }
+
+/** When this app saw the device, newest first, and a reminder that it only covers those moments. */
+@Composable
+private fun VisitHistory(visits: List<Visit>) {
+    val context = LocalContext.current
+    val flags = DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_ALL
+    HorizontalDivider(Modifier.padding(vertical = 8.dp))
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleSmall)
+        visits.asReversed().take(MAX_VISITS_SHOWN).forEach { visit ->
+            Text(
+                if (visit.start == visit.end) DateUtils.formatDateTime(context, visit.start, flags)
+                else DateUtils.formatDateRange(context, visit.start, visit.end, flags),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Text(
+            stringResource(R.string.history_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
+}
+
+private const val MAX_VISITS_SHOWN = 10
 
 @Composable
 private fun CopyRow(title: String, value: String, onClick: () -> Unit) {
