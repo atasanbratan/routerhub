@@ -286,7 +286,7 @@
         <item quantity="other">تم استيراد %d جهاز راوتر. سيطلب كل منها كلمة مروره عند فتحه.</item>
     </plurals>
     <string name="alerts_switch">نبّهني إلى الأجهزة الجديدة</string>
-    <string name="alerts_switch_hint">يتحقق كل 15 دقيقة تقريبًا ما دام هذا الهاتف على شبكة الراوتر. الراوتر الذي يسمح بجلسة دخول واحدة فقط قد يُخرجك من صفحته.</string>
+    <string name="alerts_switch_hint">يتحقق كل 15 دقيقة تقريبًا ما دام هذا الهاتف على شبكة الراوتر. الراوتر الذي يسمح بجلسة دخول واحدة فقط قد يُخرجك من صفحته. ولا يسجّل الدخول إلا إلى راوتر يشبه الذي فتحته في التطبيق.</string>
     <string name="alerts_notifications_off">إشعارات RouterHub متوقفة. اسمح بها من إعدادات Android لتلقي التنبيهات.</string>
     <string name="alerts_channel">الأجهزة الجديدة</string>
     <string name="alerts_channel_summary">انضم إلى أحد أجهزة الراوتر لديك جهاز لم يره هذا الهاتف من قبل</string>

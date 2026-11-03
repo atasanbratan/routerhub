@@ -265,7 +265,7 @@
         <item quantity="other">Se importaron %d routers. Cada uno pedirá su contraseña cuando lo abras.</item>
     </plurals>
     <string name="alerts_switch">Avisarme de dispositivos nuevos</string>
-    <string name="alerts_switch_hint">Comprueba cada 15 minutos aproximadamente mientras este teléfono está en la red del router. Un router que solo admite una sesión puede cerrar la tuya en su página web.</string>
+    <string name="alerts_switch_hint">Comprueba cada 15 minutos aproximadamente mientras este teléfono está en la red del router. Un router que solo admite una sesión puede cerrar la tuya en su página web. Solo inicia sesión en un router que se parezca al que abriste en la app.</string>
     <string name="alerts_notifications_off">Las notificaciones de RouterHub están desactivadas. Actívalas en los ajustes de Android para recibir avisos.</string>
     <string name="alerts_channel">Dispositivos nuevos</string>
     <string name="alerts_channel_summary">Un dispositivo que este teléfono no había visto se conectó a uno de tus routers</string>

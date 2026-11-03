@@ -265,7 +265,7 @@
         <item quantity="other">%d roteadores importados. Cada um pede a senha quando você o abrir.</item>
     </plurals>
     <string name="alerts_switch">Avisar sobre aparelhos novos</string>
-    <string name="alerts_switch_hint">Verifica a cada 15 minutos mais ou menos enquanto este celular está na rede do roteador. Um roteador que aceita um login por vez pode encerrar sua sessão na página dele.</string>
+    <string name="alerts_switch_hint">Verifica a cada 15 minutos mais ou menos enquanto este celular está na rede do roteador. Um roteador que aceita um login por vez pode encerrar sua sessão na página dele. Ele só faz login em um roteador que pareça o que você abriu no app.</string>
     <string name="alerts_notifications_off">As notificações do RouterHub estão desligadas. Permita nas configurações do Android para receber avisos.</string>
     <string name="alerts_channel">Aparelhos novos</string>
     <string name="alerts_channel_summary">Um aparelho que este celular nunca viu entrou em um dos seus roteadores</string>

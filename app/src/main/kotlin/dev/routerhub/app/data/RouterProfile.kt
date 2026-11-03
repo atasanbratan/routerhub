@@ -23,6 +23,8 @@ data class RouterProfile(
     val devices: List<KnownDevice> = emptyList(),
     /** Check for new devices in the background and notify about them. */
     val alertNewDevices: Boolean = false,
+    /** What the router showed before login when the user last had it open; see RouterIdentity. */
+    val identity: String? = null,
 ) {
     override fun toString() = "RouterProfile(id=$id, name=$name, firmware=$firmwareId, $protocol $host:$port)"
 }

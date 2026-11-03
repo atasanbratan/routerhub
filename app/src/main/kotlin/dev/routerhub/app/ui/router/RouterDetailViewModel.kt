@@ -19,6 +19,7 @@ import dev.routerhub.api.SettingsPageInfo
 import dev.routerhub.api.SshHostKeyUnknownException
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
+import dev.routerhub.app.alerts.RouterIdentity
 import dev.routerhub.app.data.DeviceBook
 import dev.routerhub.app.data.Pinger
 import dev.routerhub.app.data.RouterProfile
@@ -122,6 +123,7 @@ class RouterDetailViewModel(
                 val pages = optional(Capability.SETTINGS, factory) { session.settingsPages() }.orEmpty()
                 _state.update { it.copy(dsl = dsl, clients = clients, settingsPages = pages) }
                 remember(clients)
+                if (profile.alertNewDevices) rememberIdentity(profile)
             } catch (e: SshHostKeyUnknownException) {
                 _state.update { it.copy(hostKeyPrompt = e.presentedFingerprint) }
             } catch (e: CancellationException) {
@@ -240,8 +242,16 @@ class RouterDetailViewModel(
     fun messageShown() = _state.update { it.copy(message = null) }
 
     fun setNewDeviceAlerts(enabled: Boolean) {
-        val id = _state.value.profile?.id ?: return
-        container.routers.update(id) { it.copy(alertNewDevices = enabled) }
+        val profile = _state.value.profile ?: return
+        container.routers.update(profile.id) { it.copy(alertNewDevices = enabled) }
+        // Taken now, while this is certainly the user's router: background checks compare with it.
+        if (enabled && _state.value.status != null) viewModelScope.launch { rememberIdentity(profile) }
+    }
+
+    /** Records what [profile]'s router shows before login, right after logging in to it worked. */
+    private suspend fun rememberIdentity(profile: RouterProfile) {
+        val identity = RouterIdentity.of(profile) ?: return
+        container.routers.update(profile.id) { it.copy(identity = identity) }
     }
 
     fun notificationsRefused() =

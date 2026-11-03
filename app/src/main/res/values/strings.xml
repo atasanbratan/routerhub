@@ -263,7 +263,7 @@
         <item quantity="other">Imported %d routers. Each one asks for its password when you open it.</item>
     </plurals>
     <string name="alerts_switch">Alert me about new devices</string>
-    <string name="alerts_switch_hint">Checks about every 15 minutes while this phone is on the router\'s network. A router that allows one login at a time may sign you out of its web page.</string>
+    <string name="alerts_switch_hint">Checks about every 15 minutes while this phone is on the router\'s network. A router that allows one login at a time may sign you out of its web page. It only logs in to a router that looks like the one you opened in the app.</string>
     <string name="alerts_notifications_off">Notifications are off for RouterHub. Allow them in Android settings to get alerts.</string>
     <string name="alerts_channel">New devices</string>
     <string name="alerts_channel_summary">A device this phone hasn\'t seen before joined one of your routers</string>

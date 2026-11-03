@@ -251,7 +251,7 @@
         <item quantity="other">%d router diimpor. Masing-masing akan meminta kata sandinya saat Anda membukanya.</item>
     </plurals>
     <string name="alerts_switch">Beri tahu saya tentang perangkat baru</string>
-    <string name="alerts_switch_hint">Memeriksa sekitar setiap 15 menit selama ponsel ini berada di jaringan router. Router yang hanya mengizinkan satu login sekaligus bisa mengeluarkan Anda dari halaman webnya.</string>
+    <string name="alerts_switch_hint">Memeriksa sekitar setiap 15 menit selama ponsel ini berada di jaringan router. Router yang hanya mengizinkan satu login sekaligus bisa mengeluarkan Anda dari halaman webnya. Aplikasi hanya login ke router yang tampak sama dengan yang Anda buka di aplikasi.</string>
     <string name="alerts_notifications_off">Notifikasi RouterHub nonaktif. Izinkan di setelan Android untuk mendapat pemberitahuan.</string>
     <string name="alerts_channel">Perangkat baru</string>
     <string name="alerts_channel_summary">Perangkat yang belum pernah dilihat ponsel ini bergabung ke salah satu router Anda</string>

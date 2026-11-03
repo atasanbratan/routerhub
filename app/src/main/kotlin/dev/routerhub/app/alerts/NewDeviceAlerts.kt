@@ -76,6 +76,12 @@ object NewDeviceAlerts {
             val factory = factories[profile.firmwareId] ?: continue
             if (Capability.CONNECTED_CLIENTS !in factory.capabilities) continue
             if (!HomeNetwork.isOn(context, profile.host)) continue
+            // Another network can use the same address: only a router that looks like this one gets its login.
+            val identity = RouterIdentity.of(profile)
+            if (identity == null || identity != profile.identity) {
+                Log.i(TAG, "Skipped ${profile.name}: it doesn't look like the router seen in the app")
+                continue
+            }
             try {
                 val clients = FirmwareSession.open(factory, profile.toConnectionConfig()).let { session ->
                     try {
