@@ -310,4 +310,5 @@
     <string name="basic_title">الوضع الأساسي</string>
     <string name="basic_text">لا يستطيع RouterHub بعدُ قراءة إعدادات هذا الراوتر أو تغييرها. هو يتحقق فقط من أن الراوتر يرد، ويفتح صفحته.</string>
     <string name="basic_request">طلب دعم هذا الراوتر</string>
+    <string name="tested_tplink_wr">الحالة والعملاء المتصلون. لم تُجرَّب إعادة التشغيل وصفحات الإعدادات على الراوتر بعد.</string>
 </resources>

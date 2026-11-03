@@ -18,7 +18,7 @@ val releaseKeyStore: String? = providers.environmentVariable("ROUTERHUB_KEYSTORE
 // It reads their sources from a checkout of routerhub-extensions, by default next to this repository.
 val extensionsCheckout: File =
     rootProject.file(providers.gradleProperty("routerhub.extensions").getOrElse("../routerhub-extensions"))
-val bundledExtensions = listOf("demo", "openwrt-ssh", "openwrt-ubus", "tenda-ac", "tplink-adsl")
+val bundledExtensions = listOf("demo", "openwrt-ssh", "openwrt-ubus", "tenda-ac", "tplink-adsl", "tplink-wr")
 
 android {
     namespace = "dev.routerhub.app"

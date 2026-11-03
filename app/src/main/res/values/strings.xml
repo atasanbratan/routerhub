@@ -283,4 +283,5 @@
     <string name="basic_title">Basic mode</string>
     <string name="basic_text">RouterHub can\'t read or change this router\'s settings yet. It only checks that the router answers, and opens its web page.</string>
     <string name="basic_request">Ask for support for this router</string>
+    <string name="tested_tplink_wr">Status and connected clients. Reboot and settings pages not tried on the router yet.</string>
 </resources>

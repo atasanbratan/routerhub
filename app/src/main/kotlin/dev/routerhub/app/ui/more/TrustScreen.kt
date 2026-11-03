@@ -33,6 +33,7 @@ private val TESTED = listOf(
     TestedRouter("", "OpenWrt 21.02, 22.03, 23.05, 25.12", R.string.tested_openwrt_vm, R.string.tested_openwrt_vm_name),
     TestedRouter("Tenda AC10 V6.0", "V16.03.61.08", R.string.tested_tenda),
     TestedRouter("TP-Link TD-W8960N V7", "", R.string.tested_tplink),
+    TestedRouter("TP-Link TL-WR940N v4/v5", "3.17.1 Build 170207", R.string.tested_tplink_wr),
 )
 
 /** How the app treats router passwords, and which routers are known to work. */

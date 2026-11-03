@@ -286,4 +286,5 @@
     <string name="basic_title">Modo básico</string>
     <string name="basic_text">O RouterHub ainda não consegue ler nem mudar as configurações deste roteador. Ele só verifica se o roteador responde e abre a página dele.</string>
     <string name="basic_request">Pedir suporte para este roteador</string>
+    <string name="tested_tplink_wr">Status e clientes conectados. O reinício e as páginas de configuração ainda não foram testados no roteador.</string>
 </resources>

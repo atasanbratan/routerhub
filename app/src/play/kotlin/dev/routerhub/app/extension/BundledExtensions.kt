@@ -4,6 +4,7 @@ import dev.routerhub.extension.demo.DemoExtension
 import dev.routerhub.extension.openwrt.OpenWrtExtension
 import dev.routerhub.extension.tenda.TendaAcExtension
 import dev.routerhub.extension.tplink.TpLinkAdslExtension
+import dev.routerhub.extension.tplinkwr.TpLinkWrExtension
 import dev.routerhub.extension.ubus.UbusExtension
 
 /**
@@ -16,4 +17,5 @@ internal val bundledExtensions: List<BundledExtension> = listOf(
     BundledExtension("dev.routerhub.extension.ubus", "OpenWrt (LuCI)") { UbusExtension() },
     BundledExtension("dev.routerhub.extension.tenda", "Tenda AC") { TendaAcExtension() },
     BundledExtension("dev.routerhub.extension.tplink", "TP-Link ADSL2+") { TpLinkAdslExtension() },
+    BundledExtension("dev.routerhub.extension.tplinkwr", "TP-Link Wi-Fi routers") { TpLinkWrExtension() },
 )
