@@ -226,7 +226,7 @@ class RouterDetailViewModel(
         val profile = _state.value.profile ?: return
         _state.update { it.copy(hostKeyPrompt = null) }
         // The changed profile re-emits from the repository, which triggers a fresh connection.
-        container.routers.upsert(profile.copy(hostKeyFingerprint = fingerprint))
+        container.routers.update(profile.id) { it.copy(hostKeyFingerprint = fingerprint) }
     }
 
     fun dismissHostKey() = _state.update { it.copy(hostKeyPrompt = null, error = container.context.getString(R.string.host_key_not_trusted)) }
@@ -234,14 +234,14 @@ class RouterDetailViewModel(
     /** The password for an imported router. The changed profile triggers the first connection. */
     fun setPassword(password: String) {
         val profile = _state.value.profile ?: return
-        container.routers.upsert(profile.copy(password = password, passwordNeeded = false))
+        container.routers.update(profile.id) { it.copy(password = password, passwordNeeded = false) }
     }
 
     fun messageShown() = _state.update { it.copy(message = null) }
 
     fun setNewDeviceAlerts(enabled: Boolean) {
         val id = _state.value.profile?.id ?: return
-        container.routers.get(id)?.let { container.routers.upsert(it.copy(alertNewDevices = enabled)) }
+        container.routers.update(id) { it.copy(alertNewDevices = enabled) }
     }
 
     fun notificationsRefused() =

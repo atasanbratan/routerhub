@@ -20,6 +20,9 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
 
     fun get(id: String): RouterProfile? = _profiles.value.firstOrNull { it.id == id }
 
+    // Writes come from screens and from the background new-device check, so each read-modify-write
+    // happens under one lock, and nobody's change is lost to another's stale copy.
+    @Synchronized
     fun upsert(profile: RouterProfile) {
         val current = _profiles.value
         save(
@@ -28,16 +31,23 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         )
     }
 
-    /** Changes the devices remembered for a router. */
-    fun updateDevices(id: String, change: (List<KnownDevice>) -> List<KnownDevice>) {
+    /** Changes one router, starting from what is saved now. */
+    @Synchronized
+    fun update(id: String, change: (RouterProfile) -> RouterProfile) {
         val profile = get(id) ?: return
-        val devices = change(profile.devices)
-        if (devices != profile.devices) upsert(profile.copy(devices = devices))
+        val changed = change(profile)
+        if (changed != profile) upsert(changed)
     }
 
+    /** Changes the devices remembered for a router. */
+    fun updateDevices(id: String, change: (List<KnownDevice>) -> List<KnownDevice>) =
+        update(id) { it.copy(devices = change(it.devices)) }
+
+    @Synchronized
     fun delete(id: String) = save(_profiles.value.filterNot { it.id == id })
 
     /** Adds the routers not saved yet; returns how many that was. */
+    @Synchronized
     fun addImported(imported: List<RouterProfile>): Int {
         val added = ProfileTransfer.newOnes(imported, _profiles.value)
         if (added.isNotEmpty()) save(_profiles.value + added)

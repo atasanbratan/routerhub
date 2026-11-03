@@ -58,7 +58,7 @@ private class RouterSettingsSource(
     override suspend fun write(changes: Map<String, String>) = session().writeSettings(pageId, changes)
 
     override fun loginPasswordChanged(password: String) {
-        container.routers.get(profileId)?.let { container.routers.upsert(it.copy(password = password)) }
+        container.routers.update(profileId) { it.copy(password = password) }
     }
 
     override fun changed() {

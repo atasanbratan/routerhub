@@ -49,4 +49,14 @@ class AppLockTest {
         lock.onStart()
         assertFalse(lock.locked.value)
     }
+
+    @Test
+    fun `coming back from a slow screen lock entry doesn't lock again`() {
+        val lock = lock()
+        lock.onStop() // the screen lock covers the app
+        now += 2 * AppLock.GRACE_MILLIS
+        lock.unlock()
+        lock.onStart()
+        assertFalse(lock.locked.value)
+    }
 }

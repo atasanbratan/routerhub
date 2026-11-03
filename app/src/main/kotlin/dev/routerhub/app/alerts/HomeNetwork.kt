@@ -9,7 +9,8 @@ import java.net.Inet4Address
 object HomeNetwork {
     /**
      * True on Wi-Fi or Ethernet when [host] lies in the subnet of the active network or is its
-     * gateway. A router saved by name, not address, only needs Wi-Fi or Ethernet.
+     * gateway. Never for a router saved by name: on another network the name can lead to another
+     * device, which would then receive this router's login.
      */
     fun isOn(context: Context, host: String): Boolean {
         val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return false
@@ -18,7 +19,7 @@ object HomeNetwork {
         val local = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
         if (!local) return false
-        val target = ipv4(host) ?: return true
+        val target = ipv4(host) ?: return false
         val links = connectivity.getLinkProperties(network) ?: return false
         val inSubnet = links.linkAddresses.any { link ->
             val address = link.address as? Inet4Address ?: return@any false

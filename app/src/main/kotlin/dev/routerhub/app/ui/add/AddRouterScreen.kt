@@ -130,7 +130,14 @@ fun AddRouterScreen(
                 foundHost = found?.host,
                 modifier = modifier,
                 onSave = { profile ->
-                    container.routers.upsert(profile)
+                    if (editing == null) {
+                        container.routers.upsert(profile)
+                    } else {
+                        // The form holds a copy from when it opened; devices seen since then are kept.
+                        container.routers.update(profile.id) { current ->
+                            profile.copy(devices = current.devices, alertNewDevices = current.alertNewDevices)
+                        }
+                    }
                     onSaved(profile.id)
                 },
             )

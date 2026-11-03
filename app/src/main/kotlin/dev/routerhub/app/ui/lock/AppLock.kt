@@ -29,6 +29,8 @@ class AppLock(private val enabled: () -> Boolean, private val clock: () -> Long 
     }
 
     fun unlock() {
+        // Entering the screen lock can take the app to the background; coming back from it isn't leaving.
+        leftAt = null
         _locked.value = false
     }
 
