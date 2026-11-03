@@ -118,9 +118,7 @@ fun AddRouterScreen(
                 modifier,
             )
             factory == null -> Column(modifier) {
-                val suggested = found?.vendor?.let { vendor ->
-                    firmwares.values.filter { it.vendor == vendor }.minByOrNull { if (it.protocol == Protocol.WEB) 0 else 1 }
-                }
+                val suggested = found?.let { RouterFinder.suggest(it, firmwares.values) }
                 FinderCard(searching, found, suggested, onUse = { firmwareId = it.id })
                 FirmwarePicker(firmwares.values.toList(), onPick = { firmwareId = it.id }, modifier = Modifier.weight(1f))
             }

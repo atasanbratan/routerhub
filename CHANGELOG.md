@@ -10,6 +10,22 @@ Add them under **Unreleased** as you go; releasing renames that heading to the n
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-03
+
+### Added
+
+- **Russian:** the app and its extensions now follow a phone set to Russian.
+- **TP-Link Wi-Fi routers** (such as the TL-WR940N), with the extension's version 1.1: a Wi-Fi page for
+  the network name, password, channel and visibility, a DHCP server page, and the Wi-Fi switch on the
+  router screen. Its pages are now translated into every language the app speaks.
+
+### Fixed
+
+- With a VPN on, finding your router no longer reports a router at 0.0.0.0, and new-device alerts work
+  again: both looked at the VPN instead of your Wi-Fi.
+- Finding your router suggests the model its page names, such as the TL-WR940N, instead of the first
+  model of the same brand.
+
 ## [0.2.0] - 2026-11-03
 
 This version needs the 1.1 extensions, published alongside it; older app versions can't load them.
@@ -62,6 +78,7 @@ This version needs the 1.1 extensions, published alongside it; older app version
 - Extensions from the official RouterHub extensions repository are recognised as **Official**.
 - A Google Play edition with the official extensions built in.
 
-[Unreleased]: https://github.com/atasanbratan/routerhub/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/atasanbratan/routerhub/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/atasanbratan/routerhub/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/atasanbratan/routerhub/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/atasanbratan/routerhub/releases/tag/v0.1.0

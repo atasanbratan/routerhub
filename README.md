@@ -75,7 +75,7 @@ lives in memory.
 | **Settings pages** | The extension describes each page as typed fields: switches, text, passwords, numbers, choices and editable lists. The app renders them as a form and sends back **only what you changed**. |
 | **Safeguards** | Extensions can refuse dangerous changes before anything is sent, and the app shows the reason right under the field. A save is never silently replayed, so a flaky link cannot apply a change twice. |
 | **Three protocols** | `WEB` (HTTP admin pages), `SSH` (host keys pinned on first use) and `TELNET` for old routers that have nothing better. One extension can offer the same router over several. |
-| **Looks like a modern app** | Material 3, dynamic colour, light, dark and pure-black themes. In English, Spanish, Portuguese, Indonesian and Arabic, with right-to-left layout. |
+| **Looks like a modern app** | Material 3, dynamic colour, light, dark and pure-black themes. In English, Spanish, Portuguese, Indonesian, Russian and Arabic, with right-to-left layout. |
 | **Safe by design** | Router passwords are encrypted on the device. Extensions are signature-checked before their code runs, and unknown signers stay unloaded until you trust them. |
 
 ## How it works
@@ -207,7 +207,7 @@ vulnerability privately through [SECURITY.md](SECURITY.md).
 - [ ] An in-app extension index, so installing one is a tap
 - [ ] More pages for the TP-Link extension: QoS, IPTV, ALG, DNS, backup and restore
 - [ ] A Wi-Fi schedule grid editor, and advanced radio settings (needs careful hardware testing)
-- [x] Translations: Spanish, Portuguese, Indonesian and Arabic (native speakers welcome to review)
+- [x] Translations: Spanish, Portuguese, Indonesian, Russian and Arabic (native speakers welcome to review)
 - [ ] Instrumented UI tests
 - [ ] More routers. Yours?
 

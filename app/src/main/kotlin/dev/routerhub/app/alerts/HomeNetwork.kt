@@ -2,32 +2,47 @@ package dev.routerhub.app.alerts
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.LinkProperties
 import android.net.NetworkCapabilities
 import java.net.Inet4Address
 
 /** Whether this phone is on a router's own network right now, so a background check can reach it. */
 object HomeNetwork {
     /**
-     * True on Wi-Fi or Ethernet when [host] lies in the subnet of the active network or is its
+     * True when [host] lies in the subnet of a Wi-Fi or Ethernet network the phone is on, or is its
      * gateway. Never for a router saved by name: on another network the name can lead to another
      * device, which would then receive this router's login.
      */
     fun isOn(context: Context, host: String): Boolean {
-        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return false
-        val network = connectivity.activeNetwork ?: return false
-        val capabilities = connectivity.getNetworkCapabilities(network) ?: return false
-        val local = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        if (!local) return false
         val target = ipv4(host) ?: return false
-        val links = connectivity.getLinkProperties(network) ?: return false
-        val inSubnet = links.linkAddresses.any { link ->
-            val address = link.address as? Inet4Address ?: return@any false
-            inSubnet(target, ipv4(address.hostAddress.orEmpty()) ?: return@any false, link.prefixLength)
+        return localLinks(context).any { links ->
+            val inSubnet = links.linkAddresses.any { link ->
+                val address = link.address as? Inet4Address ?: return@any false
+                inSubnet(target, ipv4(address.hostAddress.orEmpty()) ?: return@any false, link.prefixLength)
+            }
+            inSubnet || links.routes.any { (it.gateway as? Inet4Address)?.hostAddress == host }
         }
-        val isGateway = links.routes.any { (it.gateway as? Inet4Address)?.hostAddress == host }
-        return inSubnet || isGateway
     }
+
+    /**
+     * The Wi-Fi and Ethernet networks the phone is on. Not just the active network: with a VPN on,
+     * that is the VPN, whose addresses and gateway say nothing about the router.
+     */
+    @Suppress("DEPRECATION") // allNetworks: its replacement needs a callback; this is a one-off look.
+    fun localLinks(context: Context): List<LinkProperties> {
+        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return emptyList()
+        return connectivity.allNetworks.filter { network ->
+            val capabilities = connectivity.getNetworkCapabilities(network) ?: return@filter false
+            !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
+                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+        }.mapNotNull(connectivity::getLinkProperties)
+    }
+
+    /** The routers of [links]: IPv4 default-route gateways, leaving out 0.0.0.0, which a VPN or point-to-point link has. */
+    fun gateways(links: List<LinkProperties>): List<String> = links.flatMap { it.routes }
+        .filter { it.isDefaultRoute }
+        .mapNotNull { (it.gateway as? Inet4Address)?.takeUnless { gateway -> gateway.isAnyLocalAddress || gateway.isLoopbackAddress }?.hostAddress }
+        .distinct()
 
     /** Whether [a] and [b] share their first [prefixLength] bits. */
     fun inSubnet(a: Int, b: Int, prefixLength: Int): Boolean {
