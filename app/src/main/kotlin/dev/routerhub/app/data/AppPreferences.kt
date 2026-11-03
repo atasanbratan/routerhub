@@ -23,11 +23,19 @@ class AppPreferences(context: Context) {
     private val _pureBlack = MutableStateFlow(prefs.getBoolean("pure_black", false))
     val pureBlack: StateFlow<Boolean> = _pureBlack.asStateFlow()
 
+    private val _appLock = MutableStateFlow(prefs.getBoolean("app_lock", false))
+    val appLock: StateFlow<Boolean> = _appLock.asStateFlow()
+
     val supportsDynamicColor: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     fun setPureBlack(enabled: Boolean) {
         _pureBlack.value = enabled
         prefs.edit { putBoolean("pure_black", enabled) }
+    }
+
+    fun setAppLock(enabled: Boolean) {
+        _appLock.value = enabled
+        prefs.edit { putBoolean("app_lock", enabled) }
     }
 
     fun setThemeMode(mode: ThemeMode) {

@@ -273,4 +273,10 @@
     </plurals>
     <string name="history_title">Seen by this app</string>
     <string name="history_hint">Only the times this app looked at the router: while you had it open, or during new-device checks. The device may have been connected at other times too.</string>
+    <string name="app_lock">App lock</string>
+    <string name="app_lock_summary">Ask for your fingerprint, face or screen lock when opening RouterHub</string>
+    <string name="app_lock_unavailable">Set a screen lock on this phone first</string>
+    <string name="lock_title">RouterHub is locked</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_prompt">Unlock RouterHub</string>
 </resources>

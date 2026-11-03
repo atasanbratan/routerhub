@@ -6,6 +6,7 @@ import dev.routerhub.app.data.RouterRepository
 import dev.routerhub.app.data.SecretCipher
 import dev.routerhub.app.engine.SessionManager
 import dev.routerhub.app.extension.ExtensionManager
+import dev.routerhub.app.ui.lock.AppLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -21,4 +22,5 @@ class AppContainer(context: Context, scope: CoroutineScope) {
     val routers = RouterRepository(context, SecretCipher())
     val sessions = SessionManager(scope)
     val preferences = AppPreferences(context)
+    val appLock = AppLock({ preferences.appLock.value })
 }

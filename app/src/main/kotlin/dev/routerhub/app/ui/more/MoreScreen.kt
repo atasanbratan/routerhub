@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
@@ -53,6 +54,8 @@ import dev.routerhub.app.BuildConfig
 import dev.routerhub.app.R
 import dev.routerhub.app.data.ThemeMode
 import dev.routerhub.app.ui.components.RouterCover
+import dev.routerhub.app.ui.lock.AppLock
+import dev.routerhub.app.ui.lock.rememberDeviceAuth
 import kotlinx.coroutines.launch
 
 /** Mihon-style "More": a logo header, then a flat list of settings. */
@@ -62,9 +65,12 @@ fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: ()
     val themeMode by prefs.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by prefs.dynamicColor.collectAsStateWithLifecycle()
     val pureBlack by prefs.pureBlack.collectAsStateWithLifecycle()
+    val appLock by prefs.appLock.collectAsStateWithLifecycle()
     var showThemeDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // Turning the lock on asks first, so nobody ends up with a lock they can't open.
+    val confirmLock = rememberDeviceAuth { prefs.setAppLock(true) }
     val exportFile = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
             scope.launch { toast(context, exportRouters(context, uri, container.routers.profiles.value)) }
@@ -115,6 +121,17 @@ fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: ()
                 leadingContent = { Icon(Icons.Outlined.DarkMode, contentDescription = null) },
                 trailingContent = { Switch(checked = pureBlack, onCheckedChange = prefs::setPureBlack) },
                 modifier = Modifier.clickable { prefs.setPureBlack(!pureBlack) },
+            )
+            val lockAvailable = AppLock.available(context)
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                headlineContent = { Text(stringResource(R.string.app_lock)) },
+                supportingContent = { Text(stringResource(if (lockAvailable) R.string.app_lock_summary else R.string.app_lock_unavailable)) },
+                leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                trailingContent = { Switch(checked = appLock, onCheckedChange = null, enabled = lockAvailable || appLock) },
+                modifier = Modifier.clickable(enabled = lockAvailable || appLock) {
+                    if (appLock) prefs.setAppLock(false) else confirmLock()
+                },
             )
             HorizontalDivider()
             ListItem(

@@ -300,4 +300,10 @@
     </plurals>
     <string name="history_title">ما رآه هذا التطبيق</string>
     <string name="history_hint">فقط الأوقات التي فحص فيها هذا التطبيق الراوتر: أثناء فتحك له، أو خلال فحوص الأجهزة الجديدة. ربما كان الجهاز متصلًا في أوقات أخرى أيضًا.</string>
+    <string name="app_lock">قفل التطبيق</string>
+    <string name="app_lock_summary">طلب بصمتك أو وجهك أو قفل الشاشة عند فتح RouterHub</string>
+    <string name="app_lock_unavailable">اضبط قفل شاشة على هذا الهاتف أولًا</string>
+    <string name="lock_title">RouterHub مقفل</string>
+    <string name="lock_unlock">فتح القفل</string>
+    <string name="lock_prompt">فتح قفل RouterHub</string>
 </resources>

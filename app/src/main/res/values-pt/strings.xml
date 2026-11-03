@@ -276,4 +276,10 @@
     </plurals>
     <string name="history_title">Visto por este app</string>
     <string name="history_hint">Só os momentos em que este app consultou o roteador: enquanto você o tinha aberto ou durante as verificações de aparelhos novos. O aparelho pode ter ficado conectado em outros momentos também.</string>
+    <string name="app_lock">Bloqueio do app</string>
+    <string name="app_lock_summary">Pedir sua digital, seu rosto ou o bloqueio de tela ao abrir o RouterHub</string>
+    <string name="app_lock_unavailable">Primeiro configure um bloqueio de tela neste celular</string>
+    <string name="lock_title">O RouterHub está bloqueado</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_prompt">Desbloquear o RouterHub</string>
 </resources>

@@ -52,7 +52,7 @@ Connect → recognise devices → change settings safely → block → unblock �
 - [x] Connection history, stating that it only covers what the app has seen (device sheet, 20 visits within 14 days)
 - [x] Pause (1 hour), resume and schedules per device on OpenWrt, tested in VMs on 21.02 and 23.05
 - [ ] The same for Tenda and TP-Link, if their firmware has time rules (needs the hardware)
-- [ ] App lock with fingerprint or PIN
+- [x] App lock with the phone's fingerprint, face or screen lock (unlocking not tried yet: the emulator has no screen lock)
 - [ ] Basic mode for unsupported routers, clearly labelled as limited
 
 ## Update 0.4 and later

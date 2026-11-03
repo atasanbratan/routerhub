@@ -1,16 +1,22 @@
 package dev.routerhub.app.ui
 
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.routerhub.app.RouterHubApp
 import dev.routerhub.app.alerts.NewDeviceAlerts
+import dev.routerhub.app.ui.lock.LockScreen
 import dev.routerhub.app.ui.theme.RouterHubTheme
 import dev.routerhub.app.ui.theme.isDark
 
@@ -37,10 +43,41 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
+            val lockOn by container.preferences.appLock.collectAsStateWithLifecycle()
+            val locked by container.appLock.locked.collectAsStateWithLifecycle()
+            LaunchedEffect(lockOn) {
+                // Keeps router details out of the recent apps preview while the lock is on.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) setRecentsScreenshotEnabled(!lockOn)
+            }
+
             RouterHubTheme(darkTheme = dark, dynamicColor = dynamicColor, pureBlack = pureBlack) {
-                RouterHubNavHost(container, openRouter)
+                Box {
+                    // Hidden from screen readers too while locked, not just covered.
+                    Box(if (locked) Modifier.clearAndSetSemantics {} else Modifier) {
+                        RouterHubNavHost(container, openRouter)
+                    }
+                    if (locked) {
+                        LockScreen(
+                            onUnlocked = container.appLock::unlock,
+                            onLockUnavailable = {
+                                container.preferences.setAppLock(false)
+                                container.appLock.unlock()
+                            },
+                        )
+                    }
+                }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        (application as RouterHubApp).container.appLock.onStart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        (application as RouterHubApp).container.appLock.onStop()
     }
 
     private companion object {

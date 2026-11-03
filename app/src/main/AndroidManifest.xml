@@ -11,6 +11,8 @@
     <!-- New-device alerts: the notification, and keeping the periodic check after a restart. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- App lock: the system's fingerprint or face prompt. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:name=".RouterHubApp"

@@ -260,4 +260,10 @@
     </plurals>
     <string name="history_title">Terlihat oleh aplikasi ini</string>
     <string name="history_hint">Hanya saat aplikasi ini memeriksa router: ketika Anda membukanya, atau saat pemeriksaan perangkat baru. Perangkat mungkin juga terhubung pada waktu lain.</string>
+    <string name="app_lock">Kunci aplikasi</string>
+    <string name="app_lock_summary">Minta sidik jari, wajah, atau kunci layar saat membuka RouterHub</string>
+    <string name="app_lock_unavailable">Atur kunci layar di ponsel ini terlebih dahulu</string>
+    <string name="lock_title">RouterHub terkunci</string>
+    <string name="lock_unlock">Buka kunci</string>
+    <string name="lock_prompt">Buka kunci RouterHub</string>
 </resources>
