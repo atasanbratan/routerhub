@@ -11,7 +11,7 @@ Connect → recognise devices → change settings safely → block → unblock �
 - [ ] Confirm a blocked device really loses internet, once the router is online
 - [x] Run the live tests on OpenWrt 19.07, 21.02, 22.03, 23.05 and 25.12 in VMs, then publish the results in `docs/openwrt-ubus.md` of routerhub-extensions (needs QEMU in `D:\vm\qemu`)
 - [x] Push `issues-1-2-4-5`, `openwrt-client-actions` and the extensions branch `openwrt-ubus`
-- [ ] Merge them into `main` (your decision: it closes the issues and may start the publish workflows)
+- [x] Merge into `main`; released as app 0.2.0 with extensions 1.1.0 (2026-11-03)
 - [x] Point the extensions' SDK commit in `gradle/libs.versions.toml` at the pushed API v5 commit (1a5e1f8)
 - [x] Set `versionCode` to 2
 
