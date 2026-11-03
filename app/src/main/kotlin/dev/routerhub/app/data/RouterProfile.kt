@@ -20,6 +20,7 @@ data class RouterProfile(
     val hostKeyFingerprint: String? = null,
     /** Imported from a file, which holds no passwords: ask before the first connection. */
     val passwordNeeded: Boolean = false,
+    val devices: List<KnownDevice> = emptyList(),
 ) {
     override fun toString() = "RouterProfile(id=$id, name=$name, firmware=$firmwareId, $protocol $host:$port)"
 }

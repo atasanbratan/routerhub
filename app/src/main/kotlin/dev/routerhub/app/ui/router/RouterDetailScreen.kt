@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.text.format.DateUtils
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.AlertDialog
@@ -101,9 +104,14 @@ import dev.routerhub.api.WifiBand
 import dev.routerhub.api.WifiRadio
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
+import dev.routerhub.app.data.DeviceBook
+import dev.routerhub.app.data.DeviceRow
+import dev.routerhub.app.data.DeviceState
+import dev.routerhub.app.data.KnownDevice
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.InfoRow
+import dev.routerhub.app.ui.components.LoginHelpDialog
 import dev.routerhub.app.ui.components.ProtocolBadge
 import dev.routerhub.app.ui.components.RouterCover
 import dev.routerhub.app.ui.components.SectionHeader
@@ -129,6 +137,7 @@ fun RouterDetailScreen(
     val viewModel: RouterDetailViewModel = viewModel(factory = RouterDetailViewModel.factory(profileId, container))
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    var showLoginHelp by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     var menuOpen by remember { mutableStateOf(false) }
@@ -199,7 +208,11 @@ fun RouterDetailScreen(
                 val firewall = stringResource(R.string.tab_firewall)
                 val system = stringResource(R.string.tab_system)
                 val errorItem: LazyListScope.() -> Unit = {
-                    state.error?.let { error -> item { ErrorCard(error, onRetry = viewModel::refresh) } }
+                    state.error?.let { error ->
+                        item {
+                            ErrorCard(error, onRetry = viewModel::refresh, onHelp = { showLoginHelp = true }.takeIf { state.loginFailed })
+                        }
+                    }
                 }
                 val tabs = buildList {
                     add(
@@ -263,8 +276,10 @@ fun RouterDetailScreen(
                             RouterTab(stringResource(R.string.tab_clients)) {
                                 errorItem()
                                 state.clients?.let { clients ->
-                                    item { SectionHeader(pluralStringResource(R.plurals.clients_header, clients.size, clients.size)) }
-                                    if (clients.isEmpty()) {
+                                    val rows = DeviceBook.rows(clients, profile.devices)
+                                    val online = rows.filter { it.state == DeviceState.ONLINE }
+                                    item { SectionHeader(pluralStringResource(R.plurals.clients_header, online.size, online.size)) }
+                                    if (online.isEmpty()) {
                                         item {
                                             Text(
                                                 stringResource(R.string.no_clients),
@@ -274,9 +289,9 @@ fun RouterDetailScreen(
                                             )
                                         }
                                     }
-                                    items(clients, key = { "client:${it.macAddress}" }) { client ->
-                                        ClientRow(client, onClick = { viewModel.selectClient(client) })
-                                    }
+                                    deviceRows(online, onClick = viewModel::selectClient)
+                                    deviceSection(R.string.clients_blocked_away, rows.filter { it.state == DeviceState.BLOCKED }, viewModel::selectClient)
+                                    deviceSection(R.string.clients_seen, rows.filter { it.state == DeviceState.SEEN }, viewModel::selectClient)
                                 }
                             },
                         )
@@ -349,12 +364,17 @@ fun RouterDetailScreen(
     if (askPassword && profile?.passwordNeeded == true && factory != null) {
         PasswordDialog(profile, onSave = viewModel::setPassword, onDismiss = { askPassword = false })
     }
+    if (showLoginHelp) LoginHelpDialog(factory?.vendor, onDismiss = { showLoginHelp = false })
     state.selectedClient?.let { client ->
         ClientSheet(
             client = client,
+            device = profile?.devices?.firstOrNull { it.mac == client.macAddress },
             actions = state.clientActions,
             onCopied = viewModel::copied,
             onRun = { viewModel.runClientAction(client, it) },
+            onRename = { viewModel.renameDevice(client.macAddress, it) },
+            onKnown = { viewModel.setDeviceKnown(client.macAddress, it) },
+            onForget = { viewModel.forgetDevice(client.macAddress) },
             onDismiss = viewModel::dismissClient,
         )
     }
@@ -482,7 +502,7 @@ private fun androidx.compose.foundation.layout.RowScope.ActionButton(
 }
 
 @Composable
-private fun ErrorCard(error: String, onRetry: () -> Unit) {
+private fun ErrorCard(error: String, onRetry: () -> Unit, onHelp: (() -> Unit)? = null) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -494,6 +514,7 @@ private fun ErrorCard(error: String, onRetry: () -> Unit) {
             Icon(Icons.Outlined.ErrorOutline, contentDescription = null)
             Spacer(Modifier.width(12.dp))
             Text(error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            onHelp?.let { TextButton(onClick = it) { Text(stringResource(R.string.login_help_short)) } }
             TextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
         }
     }
@@ -566,14 +587,40 @@ private fun WifiRow(radio: WifiRadio, canToggle: Boolean, onToggle: (Boolean) ->
     )
 }
 
+private fun LazyListScope.deviceSection(@StringRes title: Int, rows: List<DeviceRow>, onClick: (ConnectedClient) -> Unit) {
+    if (rows.isEmpty()) return
+    item { SectionHeader(stringResource(title)) }
+    deviceRows(rows, onClick)
+}
+
+private fun LazyListScope.deviceRows(rows: List<DeviceRow>, onClick: (ConnectedClient) -> Unit) {
+    items(rows, key = { "client:${it.client.macAddress}" }) { row -> ClientRow(row, onClick = { onClick(row.client) }) }
+}
+
 @Composable
-private fun ClientRow(client: ConnectedClient, onClick: () -> Unit) {
+private fun ClientRow(row: DeviceRow, onClick: () -> Unit) {
+    val client = row.client
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(client.hostname ?: client.macAddress) },
+        headlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(row.title)
+                if (row.device?.known == true) {
+                    Icon(
+                        Icons.Outlined.Verified,
+                        contentDescription = stringResource(R.string.client_known),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+            }
+        },
         supportingContent = {
-            Text(listOfNotNull(client.ipAddress, client.macAddress.takeIf { client.hostname != null }).joinToString(" · "))
+            val seen = row.device?.lastSeen?.takeIf { row.state != DeviceState.ONLINE }?.let {
+                stringResource(R.string.client_last_seen, DateUtils.getRelativeTimeSpanString(it).toString())
+            }
+            Text(seen ?: listOfNotNull(client.ipAddress, client.macAddress.takeIf { row.title != it }).joinToString(" · "))
         },
         leadingContent = {
             Icon(
@@ -596,18 +643,25 @@ private fun ClientRow(client: ConnectedClient, onClick: () -> Unit) {
     )
 }
 
+private const val MAX_DEVICE_NAME = 40
+
 /** Copying works on every router. The rest is what the router's extension offers for this client. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ClientSheet(
     client: ConnectedClient,
+    device: KnownDevice?,
     actions: List<ClientAction>?,
     onCopied: () -> Unit,
     onRun: (ClientAction) -> Unit,
+    onRename: (String) -> Unit,
+    onKnown: (Boolean) -> Unit,
+    onForget: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     var confirming by remember { mutableStateOf<ClientAction?>(null) }
+    var renaming by remember { mutableStateOf(false) }
     fun copy(label: String, text: String) {
         context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(label, text))
         onCopied()
@@ -616,9 +670,23 @@ private fun ClientSheet(
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
             Text(
-                client.hostname ?: client.macAddress,
+                device?.alias ?: client.hostname ?: client.macAddress,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            ListItem(
+                modifier = Modifier.clickable { renaming = true },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                headlineContent = { Text(stringResource(R.string.client_rename)) },
+                supportingContent = { Text(stringResource(R.string.client_rename_hint)) },
+                leadingContent = { Icon(Icons.Outlined.Edit, contentDescription = null) },
+            )
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                headlineContent = { Text(stringResource(R.string.client_known)) },
+                supportingContent = { Text(stringResource(R.string.client_known_hint)) },
+                leadingContent = { Icon(Icons.Outlined.Verified, contentDescription = null) },
+                trailingContent = { Switch(checked = device?.known == true, onCheckedChange = onKnown) },
             )
             CopyRow(stringResource(R.string.client_copy_mac), client.macAddress) { copy("MAC address", client.macAddress) }
             client.ipAddress?.let { ip -> CopyRow(stringResource(R.string.client_copy_ip), ip) { copy("IP address", ip) } }
@@ -635,7 +703,25 @@ private fun ClientSheet(
                     supportingContent = action.summary?.let { summary -> { Text(summary) } },
                 )
             }
+            if (!client.online && !client.internetBlocked) {
+                TextButton(onClick = onForget, modifier = Modifier.padding(horizontal = 8.dp)) { Text(stringResource(R.string.client_forget)) }
+            }
         }
+    }
+    if (renaming) {
+        var name by remember { mutableStateOf(device?.alias.orEmpty()) }
+        AlertDialog(
+            onDismissRequest = { renaming = false },
+            title = { Text(stringResource(R.string.client_rename)) },
+            text = { OutlinedTextField(name, { name = it.take(MAX_DEVICE_NAME) }, singleLine = true) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onRename(name)
+                    renaming = false
+                }) { Text(stringResource(R.string.save)) }
+            },
+            dismissButton = { TextButton(onClick = { renaming = false }) { Text(stringResource(R.string.cancel)) } },
+        )
     }
     confirming?.let { action ->
         ConfirmDialog(

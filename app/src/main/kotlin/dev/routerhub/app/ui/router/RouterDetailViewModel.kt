@@ -13,11 +13,13 @@ import dev.routerhub.api.ConnectionConfig
 import dev.routerhub.api.DslStats
 import dev.routerhub.api.RouterException
 import dev.routerhub.api.RouterFirmwareFactory
+import dev.routerhub.api.WrongCredentialsException
 import dev.routerhub.api.RouterStatus
 import dev.routerhub.api.SettingsPageInfo
 import dev.routerhub.api.SshHostKeyUnknownException
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
+import dev.routerhub.app.data.DeviceBook
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.data.toConnectionConfig
 import dev.routerhub.app.engine.FirmwareSession
@@ -46,6 +48,8 @@ data class RouterDetailState(
     val clientActions: List<ClientAction>? = null,
     val settingsPages: List<SettingsPageInfo> = emptyList(),
     val error: String? = null,
+    /** [error] is a refused login, so the screen can offer help with the password. */
+    val loginFailed: Boolean = false,
     /** SSH first contact: fingerprint waiting for the user's confirmation. */
     val hostKeyPrompt: String? = null,
     /** One-shot snackbar text. */
@@ -99,7 +103,7 @@ class RouterDetailViewModel(
         if (profile.passwordNeeded) return
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
-            _state.update { it.copy(refreshing = true, error = null) }
+            _state.update { it.copy(refreshing = true, error = null, loginFailed = false) }
             try {
                 val session = container.sessions.obtain(profile, factory)
                 val status = session.status()
@@ -108,13 +112,14 @@ class RouterDetailViewModel(
                 val clients = optional(Capability.CONNECTED_CLIENTS, factory) { session.connectedClients() }
                 val pages = optional(Capability.SETTINGS, factory) { session.settingsPages() }.orEmpty()
                 _state.update { it.copy(dsl = dsl, clients = clients, settingsPages = pages) }
+                remember(clients)
             } catch (e: SshHostKeyUnknownException) {
                 _state.update { it.copy(hostKeyPrompt = e.presentedFingerprint) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: RouterException) {
                 Log.w(TAG, "Refreshing ${profile.id} failed", e)
-                _state.update { it.copy(error = friendlyError(container.context, e)) }
+                _state.update { it.copy(error = friendlyError(container.context, e), loginFailed = e is WrongCredentialsException) }
             } finally {
                 _state.update { it.copy(refreshing = false) }
             }
@@ -147,6 +152,22 @@ class RouterDetailViewModel(
         }
     }
 
+    /** Sets the name the user gave a device; a blank one goes back to the router's name. */
+    fun renameDevice(mac: String, alias: String) =
+        container.routers.updateDevices(profileId) { devices -> DeviceBook.update(devices, mac) { it.copy(alias = alias.trim().ifEmpty { null }) } }
+
+    fun setDeviceKnown(mac: String, known: Boolean) =
+        container.routers.updateDevices(profileId) { devices -> DeviceBook.update(devices, mac) { it.copy(known = known) } }
+
+    fun forgetDevice(mac: String) {
+        container.routers.updateDevices(profileId) { devices -> devices.filterNot { it.mac == mac } }
+        dismissClient()
+    }
+
+    private fun remember(clients: List<ConnectedClient>?) {
+        if (clients != null) container.routers.updateDevices(profileId) { DeviceBook.record(it, clients, System.currentTimeMillis()) }
+    }
+
     fun dismissClient() = _state.update { it.copy(selectedClient = null, clientActions = null) }
 
     fun copied() = _state.update { it.copy(message = container.context.getString(R.string.copied)) }
@@ -155,7 +176,9 @@ class RouterDetailViewModel(
         _state.update { it.copy(selectedClient = null, clientActions = null, message = container.context.getString(R.string.client_action_running)) }
         action(success = R.string.client_action_done) { session ->
             session.runClientAction(client, action.id)
-            _state.update { it.copy(clients = session.connectedClients()) }
+            val clients = session.connectedClients()
+            _state.update { it.copy(clients = clients) }
+            remember(clients)
         }
     }
 

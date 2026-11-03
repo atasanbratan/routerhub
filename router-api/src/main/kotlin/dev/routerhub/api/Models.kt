@@ -53,6 +53,8 @@ public data class ConnectedClient @JvmOverloads constructor(
     public val medium: ConnectionMedium = ConnectionMedium.UNKNOWN,
     /** A rule on the router keeps this device off the internet. */
     public val internetBlocked: Boolean = false,
+    /** False for a device the router only remembers, such as a blocked one that is away. */
+    public val online: Boolean = true,
 )
 
 /** Something the router can do for one client, offered by [RouterFirmware.clientActions]. */

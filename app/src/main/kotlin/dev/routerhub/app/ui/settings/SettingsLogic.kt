@@ -23,6 +23,28 @@ fun pendingChanges(page: SettingsPage, edits: Map<String, String>): Map<String, 
     }
 }
 
+/**
+ * Titles of the fields in [changes] that [reloaded] doesn't show as sent, after a save. Case and
+ * surrounding spaces don't count, as routers often normalise them. Secrets can't be read back, so
+ * they aren't checked, nor are fields the reloaded page no longer has.
+ */
+fun notKept(reloaded: SettingsPage, changes: Map<String, String>): List<String> = reloaded.fields.mapNotNull { field ->
+    val sent = changes[field.key] ?: return@mapNotNull null
+    val kept = when (field) {
+        is SettingField.Info, is SettingField.Secret -> true
+        is SettingField.Toggle -> sent.toBoolean() == field.value
+        is SettingField.Number -> sent.trim() == field.value.toString()
+        is SettingField.Text -> same(sent, field.value)
+        is SettingField.Choice -> same(sent, field.value)
+        is SettingField.Table -> TableCodec.decode(sent).map { row -> row.map(::normal) } == field.rows.map { row -> row.map(::normal) }
+    }
+    field.title.takeUnless { kept }
+}
+
+private fun normal(value: String) = value.trim().lowercase()
+
+private fun same(a: String, b: String) = normal(a) == normal(b)
+
 /** Value to show for a field: the user's edit if any, otherwise the router's current one. */
 fun currentValue(field: SettingField, edits: Map<String, String>): String = edits[field.key] ?: when (field) {
     is SettingField.Info -> field.value

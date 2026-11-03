@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -56,7 +57,7 @@ import kotlinx.coroutines.launch
 
 /** Mihon-style "More": a logo header, then a flat list of settings. */
 @Composable
-fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit) {
+fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: () -> Unit) {
     val prefs = container.preferences
     val themeMode by prefs.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by prefs.dynamicColor.collectAsStateWithLifecycle()
@@ -137,6 +138,13 @@ fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit) {
                 modifier = Modifier.clickable { importFile.launch(arrayOf("application/json", "application/octet-stream")) },
             )
             HorizontalDivider()
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                headlineContent = { Text(stringResource(R.string.trust_title)) },
+                supportingContent = { Text(stringResource(R.string.trust_summary)) },
+                leadingContent = { Icon(Icons.Outlined.Shield, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onOpenTrust),
+            )
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text(stringResource(R.string.about)) },

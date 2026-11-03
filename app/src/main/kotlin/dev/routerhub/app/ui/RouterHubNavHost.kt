@@ -34,6 +34,7 @@ import dev.routerhub.app.ui.browse.BrowseScreen
 import dev.routerhub.app.ui.more.AboutScreen
 import dev.routerhub.app.ui.more.LicensesScreen
 import dev.routerhub.app.ui.more.MoreScreen
+import dev.routerhub.app.ui.more.TrustScreen
 import dev.routerhub.app.ui.router.RouterDetailScreen
 import dev.routerhub.app.ui.routers.RoutersScreen
 import dev.routerhub.app.ui.settings.SettingsPageScreen
@@ -51,6 +52,7 @@ private object Routes {
     const val SETTINGS = "router/{id}/settings/{page}"
     const val ABOUT = "about"
     const val LICENSES = "about/licenses"
+    const val TRUST = "more/trust"
     fun router(id: String) = "router/$id"
     fun settings(id: String, page: String) = "router/$id/settings/$page"
     fun edit(id: String) = "edit/$id"
@@ -110,7 +112,14 @@ fun RouterHubNavHost(container: AppContainer) {
                 BrowseScreen(container = container, onAddRouter = { navController.navigate(Routes.add(it)) })
             }
             composable(TopLevel.MORE.route) {
-                MoreScreen(container = container, onOpenAbout = { navController.navigate(Routes.ABOUT) })
+                MoreScreen(
+                    container = container,
+                    onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                    onOpenTrust = { navController.navigate(Routes.TRUST) },
+                )
+            }
+            composable(Routes.TRUST) {
+                TrustScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.ABOUT) {
                 AboutScreen(

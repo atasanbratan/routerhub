@@ -33,12 +33,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,8 +52,11 @@ import dev.routerhub.api.Protocol
 import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
+import dev.routerhub.app.data.FoundRouter
+import dev.routerhub.app.data.RouterFinder
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
+import dev.routerhub.app.ui.components.LoginHelpDialog
 import dev.routerhub.app.ui.components.ProtocolBadge
 import dev.routerhub.app.ui.components.RouterCover
 import java.util.UUID
@@ -73,6 +79,15 @@ fun AddRouterScreen(
     var firmwareId by rememberSaveable { mutableStateOf(editing?.firmwareId ?: initialFirmwareId) }
     val factory = firmwareId?.let { firmwares[it] }
     val canChangeFirmware = editProfileId == null && initialFirmwareId == null
+    val context = LocalContext.current
+    var searching by remember { mutableStateOf(editProfileId == null) }
+    var found by remember { mutableStateOf<FoundRouter?>(null) }
+    LaunchedEffect(Unit) {
+        if (editProfileId == null) {
+            found = RouterFinder(context.applicationContext).find()
+            searching = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -101,16 +116,42 @@ fun AddRouterScreen(
                 stringResource(R.string.edit_extension_missing),
                 modifier,
             )
-            factory == null -> FirmwarePicker(firmwares.values.toList(), onPick = { firmwareId = it.id }, modifier = modifier)
+            factory == null -> Column(modifier) {
+                val suggested = found?.vendor?.let { vendor ->
+                    firmwares.values.filter { it.vendor == vendor }.minByOrNull { if (it.protocol == Protocol.WEB) 0 else 1 }
+                }
+                FinderCard(searching, found, suggested, onUse = { firmwareId = it.id })
+                FirmwarePicker(firmwares.values.toList(), onPick = { firmwareId = it.id }, modifier = Modifier.weight(1f))
+            }
             else -> ConnectionForm(
                 factory = factory,
                 existing = editing,
+                foundHost = found?.host,
                 modifier = modifier,
                 onSave = { profile ->
                     container.routers.upsert(profile)
                     onSaved(profile.id)
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun FinderCard(searching: Boolean, found: FoundRouter?, suggested: RouterFirmwareFactory?, onUse: (RouterFirmwareFactory) -> Unit) {
+    if (!searching && found == null) return
+    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                when {
+                    found == null -> stringResource(R.string.finder_searching)
+                    suggested != null -> stringResource(R.string.finder_found, suggested.displayName, found.host)
+                    else -> stringResource(R.string.finder_found_unknown, found.host)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (suggested != null) TextButton(onClick = { onUse(suggested) }) { Text(stringResource(R.string.finder_use)) }
         }
     }
 }
@@ -143,20 +184,25 @@ private fun FirmwarePicker(factories: List<RouterFirmwareFactory>, onPick: (Rout
 private fun ConnectionForm(
     factory: RouterFirmwareFactory,
     existing: RouterProfile?,
+    foundHost: String?,
     modifier: Modifier,
     onSave: (RouterProfile) -> Unit,
 ) {
     val title = if (factory.displayName.startsWith(factory.vendor)) factory.displayName else "${factory.vendor} ${factory.displayName}"
     var name by rememberSaveable { mutableStateOf(existing?.name ?: title) }
-    var host by rememberSaveable { mutableStateOf(existing?.host ?: "192.168.1.1") }
+    var host by rememberSaveable { mutableStateOf(existing?.host ?: foundHost ?: DEFAULT_ADDRESS) }
+    LaunchedEffect(foundHost) {
+        if (existing == null && foundHost != null && host == DEFAULT_ADDRESS) host = foundHost
+    }
     var port by rememberSaveable { mutableStateOf((existing?.port ?: factory.defaultPort).toString()) }
     var username by rememberSaveable {
-        mutableStateOf(existing?.username ?: if (factory.protocol == Protocol.SSH) "root" else "admin")
+        mutableStateOf(existing?.username ?: if (factory.protocol == Protocol.SSH || factory.vendor == "OpenWrt") "root" else "admin")
     }
     // When editing, the stored password is never put back on screen: blank means "keep it".
     var password by rememberSaveable { mutableStateOf("") }
     var useHttps by rememberSaveable { mutableStateOf(existing?.useHttps ?: false) }
     var showPassword by rememberSaveable { mutableStateOf(false) }
+    var showHelp by rememberSaveable { mutableStateOf(false) }
 
     val portNumber = port.toIntOrNull()
     val valid = name.isNotBlank() && host.isNotBlank() && portNumber != null && portNumber in 1..65535 && username.isNotBlank()
@@ -206,11 +252,9 @@ private fun ConnectionForm(
         OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.field_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(
             password, { password = it },
-            label = { Text(if (existing != null) stringResource(R.string.field_new_password) else stringResource(R.string.field_password)) },
-            supportingText = if (existing != null) {
-                { Text(stringResource(R.string.password_keep_hint)) }
-            } else {
-                null
+            label = { Text(if (existing != null) stringResource(R.string.field_new_password) else stringResource(R.string.field_admin_password)) },
+            supportingText = {
+                Text(stringResource(if (existing != null) R.string.password_keep_hint else R.string.field_admin_password_hint))
             },
             singleLine = true,
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
@@ -225,6 +269,7 @@ private fun ConnectionForm(
             },
             modifier = Modifier.fillMaxWidth(),
         )
+        TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.login_help_button)) }
         if (factory.protocol == Protocol.WEB) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.use_https), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
@@ -276,4 +321,7 @@ private fun ConnectionForm(
             Text(stringResource(R.string.save), modifier = Modifier.padding(start = 8.dp))
         }
     }
+    if (showHelp) LoginHelpDialog(factory.vendor, onDismiss = { showHelp = false })
 }
+
+private const val DEFAULT_ADDRESS = "192.168.1.1"

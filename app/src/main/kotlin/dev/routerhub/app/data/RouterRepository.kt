@@ -3,6 +3,7 @@ package dev.routerhub.app.data
 import android.content.Context
 import android.util.Log
 import androidx.core.content.edit
+import dev.routerhub.api.ConnectionMedium
 import dev.routerhub.api.Protocol
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,13 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
             if (current.any { it.id == profile.id }) current.map { if (it.id == profile.id) profile else it }
             else current + profile,
         )
+    }
+
+    /** Changes the devices remembered for a router. */
+    fun updateDevices(id: String, change: (List<KnownDevice>) -> List<KnownDevice>) {
+        val profile = get(id) ?: return
+        val devices = change(profile.devices)
+        if (devices != profile.devices) upsert(profile.copy(devices = devices))
     }
 
     fun delete(id: String) = save(_profiles.value.filterNot { it.id == id })
@@ -61,6 +69,26 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         .put("useHttps", p.useHttps)
         .put("hostKey", p.hostKeyFingerprint ?: JSONObject.NULL)
         .put("passwordNeeded", p.passwordNeeded)
+        .put("devices", JSONArray(p.devices.map(::deviceToJson)))
+
+    private fun deviceToJson(d: KnownDevice) = JSONObject()
+        .put("mac", d.mac)
+        .put("alias", d.alias ?: JSONObject.NULL)
+        .put("known", d.known)
+        .put("hostname", d.hostname ?: JSONObject.NULL)
+        .put("ip", d.ipAddress ?: JSONObject.NULL)
+        .put("medium", d.medium.name)
+        .put("lastSeen", d.lastSeen ?: JSONObject.NULL)
+
+    private fun deviceFromJson(o: JSONObject) = KnownDevice(
+        mac = o.getString("mac"),
+        alias = o.optString("alias").takeIf { it.isNotEmpty() && !o.isNull("alias") },
+        known = o.optBoolean("known"),
+        hostname = o.optString("hostname").takeIf { it.isNotEmpty() && !o.isNull("hostname") },
+        ipAddress = o.optString("ip").takeIf { it.isNotEmpty() && !o.isNull("ip") },
+        medium = ConnectionMedium.entries.firstOrNull { it.name == o.optString("medium") } ?: ConnectionMedium.UNKNOWN,
+        lastSeen = if (o.isNull("lastSeen")) null else o.optLong("lastSeen"),
+    )
 
     private fun fromJson(o: JSONObject) = RouterProfile(
         id = o.getString("id"),
@@ -76,6 +104,7 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         useHttps = o.optBoolean("useHttps"),
         hostKeyFingerprint = o.optString("hostKey").takeIf { it.isNotEmpty() && !o.isNull("hostKey") },
         passwordNeeded = o.optBoolean("passwordNeeded"),
+        devices = o.optJSONArray("devices")?.let { array -> (0 until array.length()).map { deviceFromJson(array.getJSONObject(it)) } }.orEmpty(),
     )
 
     private companion object {

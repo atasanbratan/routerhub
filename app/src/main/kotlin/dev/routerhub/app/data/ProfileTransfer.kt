@@ -10,9 +10,10 @@ import java.util.UUID
 class InvalidRoutersFileException(message: String) : Exception(message)
 
 /**
- * The file behind Export and Import routers. It holds only what it takes to find a router again:
- * never a password and never a pinned SSH host key. So it can't be decrypted or leak a login, an
- * imported router asks for its password, and SSH host keys are confirmed again on the new phone.
+ * The file behind Export and Import routers. It holds what it takes to find a router again, and the
+ * names the user gave its devices: never a password and never a pinned SSH host key. So it can't be
+ * decrypted or leak a login, an imported router asks for its password, and SSH host keys are
+ * confirmed again on the new phone. Devices the user didn't name or mark stay out of it.
  */
 object ProfileTransfer {
     private const val FORMAT = "routerhub-routers"
@@ -53,6 +54,18 @@ object ProfileTransfer {
         .put("port", p.port)
         .put("username", p.username)
         .put("useHttps", p.useHttps)
+        .put("devices", JSONArray(p.devices.filter { it.alias != null || it.known }.map(::deviceToJson)))
+
+    private fun deviceToJson(d: KnownDevice) = JSONObject()
+        .put("mac", d.mac)
+        .put("alias", d.alias ?: JSONObject.NULL)
+        .put("known", d.known)
+
+    private fun deviceFromJson(o: JSONObject) = KnownDevice(
+        mac = o.getString("mac").lowercase(),
+        alias = o.optString("alias").takeIf { it.isNotEmpty() && !o.isNull("alias") },
+        known = o.optBoolean("known"),
+    )
 
     private fun fromJson(o: JSONObject): RouterProfile {
         val port = o.getInt("port")
@@ -71,6 +84,7 @@ object ProfileTransfer {
             password = "",
             useHttps = o.optBoolean("useHttps"),
             passwordNeeded = true,
+            devices = o.optJSONArray("devices")?.let { array -> (0 until array.length()).map { deviceFromJson(array.getJSONObject(it)) } }.orEmpty(),
         )
     }
 }

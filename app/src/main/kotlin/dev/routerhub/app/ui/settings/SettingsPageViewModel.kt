@@ -124,8 +124,7 @@ class SettingsPageViewModel(private val source: SettingsSource, private val cont
 
                 // The router now expects the new login password; keep the saved profile in step.
                 page.loginPasswordKey?.let { changes[it] }?.let(source::loginPasswordChanged)
-                _state.update { it.copy(message = context.getString(R.string.saved)) }
-                reloadAfterWrite()
+                reloadAfterWrite(changes, answered = true)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: InvalidSettingException) {
@@ -139,8 +138,7 @@ class SettingsPageViewModel(private val source: SettingsSource, private val cont
             } catch (e: FirmwareTimeoutException) {
                 // Restarting the radio can stall the router's web server mid-answer.
                 Log.w(TAG, "Saving timed out", e)
-                _state.update { it.copy(message = context.getString(R.string.save_no_answer)) }
-                reloadAfterWrite()
+                reloadAfterWrite(changes, answered = false)
             } catch (e: RouterException) {
                 Log.w(TAG, "Saving failed", e)
                 _state.update { it.copy(message = friendlyError(context, e)) }
@@ -150,18 +148,28 @@ class SettingsPageViewModel(private val source: SettingsSource, private val cont
         }
     }
 
-    /** Gives the radio a moment to come back, then shows what the router really holds now. */
-    private suspend fun reloadAfterWrite() {
+    /**
+     * Gives the radio a moment to come back, then shows what the router really holds now and says
+     * whether that is what was sent. [answered] is false when the save itself got no answer.
+     */
+    private suspend fun reloadAfterWrite(changes: Map<String, String>, answered: Boolean) {
         delay(RADIO_RESTART_MILLIS)
-        try {
+        val message = try {
             val page = source.read()
             _state.update { it.fresh(page) }
+            val missing = notKept(page, changes)
+            when {
+                missing.isNotEmpty() -> context.getString(R.string.save_not_kept, missing.joinToString())
+                answered -> context.getString(R.string.saved_checked)
+                else -> context.getString(R.string.save_applied_late)
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: RouterException) {
             Log.w(TAG, "Re-reading the page failed", e)
-            _state.update { it.copy(message = context.getString(R.string.saved_not_reloaded)) }
+            context.getString(if (answered) R.string.saved_not_reloaded else R.string.save_no_answer)
         }
+        _state.update { it.copy(message = message) }
         source.changed()
     }
 

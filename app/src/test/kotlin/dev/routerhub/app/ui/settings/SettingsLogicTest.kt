@@ -99,4 +99,22 @@ class SettingsLogicTest {
         assertNull(localError(table, rows(2)))
         assertEquals(LocalError.TooManyRows(2, "rule"), localError(table, rows(3)))
     }
+
+    @Test
+    fun `a save is checked against what the router shows afterwards`() {
+        val reloaded = page.copy(fields = listOf(SettingField.Text("text", "Text", "New "), SettingField.Toggle("toggle", "Toggle", false), table, secret))
+        val sent = mapOf("text" to "new", "toggle" to "false", "secret" to "longsecret", "rules" to TableCodec.encode(listOf(listOf("FIRST"))))
+        assertEquals(emptyList<String>(), notKept(reloaded, sent))
+    }
+
+    @Test
+    fun `a value the router didn't keep is named`() {
+        val reloaded = page.copy(fields = listOf(SettingField.Text("text", "Text", "old"), SettingField.Toggle("toggle", "Toggle", true)))
+        assertEquals(listOf("Text", "Toggle"), notKept(reloaded, mapOf("text" to "new", "toggle" to "false")))
+    }
+
+    @Test
+    fun `fields the reloaded page doesn't have are not reported`() {
+        assertEquals(emptyList<String>(), notKept(page.copy(fields = emptyList()), mapOf("text" to "new")))
+    }
 }

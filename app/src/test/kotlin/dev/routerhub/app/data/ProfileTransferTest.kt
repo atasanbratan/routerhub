@@ -38,6 +38,20 @@ class ProfileTransferTest {
     }
 
     @Test
+    fun `named devices travel with the router, and other devices stay behind`() {
+        val devices = listOf(
+            KnownDevice("02:00:00:00:00:01", alias = "Phone", hostname = "secret-host", ipAddress = "192.0.2.9", lastSeen = 5),
+            KnownDevice("02:00:00:00:00:02", known = true),
+            KnownDevice("02:00:00:00:00:03", hostname = "unnamed"),
+        )
+        val file = ProfileTransfer.encode(listOf(saved.copy(devices = devices)))
+        assertFalse(file.contains("secret-host"))
+        assertFalse(file.contains("00:03"))
+        val imported = ProfileTransfer.decode(file).single().devices
+        assertEquals(listOf(KnownDevice("02:00:00:00:00:01", alias = "Phone"), KnownDevice("02:00:00:00:00:02", known = true)), imported)
+    }
+
+    @Test
     fun `a firmware that isn't installed is kept`() {
         val other = saved.copy(firmwareId = "not.installed.firmware")
         assertEquals("not.installed.firmware", ProfileTransfer.decode(ProfileTransfer.encode(listOf(other))).single().firmwareId)
