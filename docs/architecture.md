@@ -51,8 +51,8 @@ Steps 1 and 2 only read `PackageManager` metadata. No extension bytecode runs un
    `ExtensionContract.MIN_SUPPORTED_API_VERSION`.
 
 `API_VERSION` rises whenever extensions may start depending on something new (v2: settings pages and
-`TELNET`; v3: editable lists; v4: client actions). The host loads every version from `MIN_SUPPORTED_API_VERSION` up to its own,
-so an extension that declares v1 keeps working on a v4 host.
+`TELNET`; v3: editable lists; v4: client actions; v5: settings group ids and translations). The host loads every version from
+`MIN_SUPPORTED_API_VERSION` up to its own, so an extension that declares v1 keeps working on a v5 host.
 
 ## Trust and signatures
 

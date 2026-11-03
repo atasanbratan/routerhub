@@ -48,7 +48,7 @@ the app provides.
         <!-- a public no-arg class implementing RouterExtension; a leading dot is relative to the package -->
         <meta-data android:name="dev.routerhub.extension.class" android:value=".AcmeExtension" />
         <!-- the router-api version you compiled against (see ExtensionContract.API_VERSION) -->
-        <meta-data android:name="dev.routerhub.extension.api" android:value="3" />
+        <meta-data android:name="dev.routerhub.extension.api" android:value="5" />
     </application>
 </manifest>
 ```
@@ -120,8 +120,8 @@ internal class AcmeFirmware(
 }
 ```
 
-Capabilities are `STATUS`, `DSL_STATS`, `CONNECTED_CLIENTS`, `REBOOT`, `WIFI_TOGGLE` and `SETTINGS`. The app
-only offers controls for the ones you declare.
+Capabilities are `STATUS`, `DSL_STATS`, `CONNECTED_CLIENTS`, `CLIENT_ACTIONS`, `REBOOT`, `WIFI_TOGGLE` and
+`SETTINGS`. The app only offers controls for the ones you declare.
 
 ## 5. Settings pages (optional)
 
@@ -129,7 +129,35 @@ Add `Capability.SETTINGS` and implement `listSettingsPages()`, `readSettings()` 
 describe the fields; the app renders the form. See [settings-pages.md](settings-pages.md) for the field types,
 lists and the rules.
 
-## 6. Test it without a router
+Put each page in one of the app's tabs with a `SettingsGroup` id: `WIRELESS`, `NETWORK`, `FIREWALL` or
+`SYSTEM`. The app names those tabs in the user's language. Any other text gets a tab of its own with that
+title, so use it only for something that fits none of them.
+
+## 6. Translations (optional)
+
+Write your text in English. To translate it, add JSON files next to your entry class, in an `i18n` folder of
+its package under `src/main/resources`, one per language:
+
+```
+src/main/resources/com/example/acme/i18n/es.json
+src/main/resources/com/example/acme/i18n/pt-BR.json
+```
+
+Each file maps the English text to the translation:
+
+```json
+{
+  "Router password": "Contraseña del router",
+  "Saving restarts Wi-Fi; wireless devices reconnect.": "Al guardar se reinicia el Wi-Fi y los dispositivos se vuelven a conectar."
+}
+```
+
+The app translates page titles and summaries, field titles, choice labels, list columns, save warnings,
+client actions and status labels. Keys and values sent to the router are never touched. Text with no entry,
+text built at run time ("Radio $radio") and anything the router itself reports stay as they are. A region's
+file (`pt-BR`) wins over the language's (`pt`) and falls back to it.
+
+## 7. Test it without a router
 
 Keep the router-specific parsing in **pure functions** and unit-test them against captured pages or command
 output. Scrub the captures first: no real SSIDs, passwords, serial numbers, MAC addresses or hostnames. Use
@@ -143,7 +171,7 @@ the TP-Link extension pins its request builders.
 Real-hardware tests belong behind an environment variable and must restore what they change. The TP-Link
 extension's `TpLinkLiveWriteTest` is a worked example.
 
-## 7. Try it in the app
+## 8. Try it in the app
 
 ```bash
 ./gradlew :extensions:acme:assembleDebug
@@ -161,7 +189,7 @@ Open **Browse → Extensions**. An extension signed with the same debug key as y
   app's copies always win, so bundling them only adds dead weight.
 - **`router-api` is append-only.** New model fields go at the end with defaults, new interface methods need
   default bodies, and `API_VERSION` rises when extensions may start relying on something new. An extension
-  compiled against v1 keeps working on a v4 app.
+  compiled against v1 keeps working on a v5 app.
 - **Secrets stay secret.** Never log credentials or return a stored secret to the app. Every `ConnectionConfig`
   redacts its `toString()`; keep it that way for anything you add.
 - **Ids are forever.** Changing a factory `id` orphans every router saved with it.

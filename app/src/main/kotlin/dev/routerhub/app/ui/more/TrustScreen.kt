@@ -24,13 +24,13 @@ import dev.routerhub.app.BuildConfig
 import dev.routerhub.app.R
 import dev.routerhub.app.ui.components.SectionHeader
 
-/** A router the official extensions were tried on, and what was tried. */
-private class TestedRouter(val name: String, val firmware: String, @StringRes val tested: Int)
+/** A router the official extensions were tried on, and what was tried. [nameRes] is for names that aren't a model. */
+private class TestedRouter(val name: String, val firmware: String, @StringRes val tested: Int, @StringRes val nameRes: Int? = null)
 
 /** Kept in step with the extensions' docs. Only what was run against real hardware or a real firmware image. */
 private val TESTED = listOf(
     TestedRouter("Xiaomi Mi Router 4C", "OpenWrt 24.10", R.string.tested_openwrt_hardware),
-    TestedRouter("OpenWrt in a virtual machine", "OpenWrt 21.02, 22.03, 23.05 and 25.12", R.string.tested_openwrt_vm),
+    TestedRouter("", "OpenWrt 21.02, 22.03, 23.05, 25.12", R.string.tested_openwrt_vm, R.string.tested_openwrt_vm_name),
     TestedRouter("Tenda AC10 V6.0", "V16.03.61.08", R.string.tested_tenda),
     TestedRouter("TP-Link TD-W8960N V7", "", R.string.tested_tplink),
 )
@@ -72,7 +72,7 @@ fun TrustScreen(onBack: () -> Unit) {
             )
             TESTED.forEach { router ->
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(router.name, style = MaterialTheme.typography.titleSmall)
+                    Text(router.nameRes?.let { stringResource(it) } ?: router.name, style = MaterialTheme.typography.titleSmall)
                     if (router.firmware.isNotEmpty()) {
                         Text(router.firmware, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

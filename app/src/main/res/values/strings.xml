@@ -85,7 +85,6 @@
     <string name="delete_router">Delete router</string>
     <string name="detail_extension_missing">The extension for this router (%1$s) isn\'t installed or isn\'t trusted.</string>
     <string name="wifi">Wi-Fi</string>
-    <string name="settings_group">%1$s settings</string>
     <string name="no_clients">No devices connected right now</string>
     <string name="reboot_title">Reboot router?</string>
     <string name="reboot_text">Everyone on this network will lose connection for a minute or two.</string>
@@ -141,6 +140,7 @@
     <string name="tested_routers">Tested routers</string>
     <string name="tested_intro">These were tried for real. Other models of the same firmware usually work too, but haven\'t been checked.</string>
     <string name="tested_openwrt_hardware">Status, clients, every settings page, Wi-Fi changes, blocking, reservations and port forwarding.</string>
+    <string name="tested_openwrt_vm_name">OpenWrt in a virtual machine</string>
     <string name="tested_openwrt_vm">Status, every settings page, reservations and port forwarding. No Wi-Fi in a virtual machine.</string>
     <string name="tested_tenda">Status, clients, Wi-Fi switch, reboot and settings pages. Blocking from the clients list uses the router\'s MAC filter and hasn\'t been tried on the router yet.</string>
     <string name="tested_tplink">Status, DSL line, clients, reboot and settings pages. Blocking from the clients list isn\'t available yet: use the MAC filter page.</string>
@@ -221,7 +221,6 @@
     <string name="number_range">%1$d to %2$d</string>
     <string name="number_out_of_range">Enter a number from %1$d to %2$d</string>
     <string name="too_long">Too long</string>
-    <string name="too_many_rows">At most %1$d %2$ss</string>
     <string name="password_needed">Enter the password for %1$s to connect.</string>
     <string name="enter_password">Enter password</string>
     <string name="password_for">%1$s at %2$s:%3$d</string>
@@ -250,6 +249,10 @@
     <plurals name="at_most_characters">
         <item quantity="one">At most %d character</item>
         <item quantity="other">At most %d characters</item>
+    </plurals>
+    <plurals name="too_many_rows">
+        <item quantity="one">The list holds at most %d entry</item>
+        <item quantity="other">The list holds at most %d entries</item>
     </plurals>
     <plurals name="routers_exported">
         <item quantity="one">Exported %d router</item>

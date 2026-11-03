@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.text.BidiFormatter
 import dev.routerhub.api.Protocol
 
 // Mihon greets empty screens with a random face; so do we.
@@ -103,7 +104,8 @@ fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(0.42f),
         )
-        Text(value, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(0.58f))
+        // Router values are often English or numbers: isolated, "13 of 56 MiB" keeps its order in Arabic.
+        Text(BidiFormatter.getInstance().unicodeWrap(value), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(0.58f))
     }
 }
 

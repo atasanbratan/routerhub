@@ -20,12 +20,18 @@ import dev.routerhub.api.SshHostKeyUnknownException
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
 import dev.routerhub.app.data.DeviceBook
+import dev.routerhub.app.data.Pinger
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.data.toConnectionConfig
 import dev.routerhub.app.engine.FirmwareSession
 import dev.routerhub.app.ui.friendlyError
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +48,9 @@ data class RouterDetailState(
     val status: RouterStatus? = null,
     val dsl: DslStats? = null,
     val clients: List<ConnectedClient>? = null,
+    /** When each client (by MAC) last answered a ping, and when the latest round of pings ended. */
+    val pingReplies: Map<String, Long> = emptyMap(),
+    val pingedAt: Long = 0,
     /** The client whose sheet is open. */
     val selectedClient: ConnectedClient? = null,
     /** What the router offers for [selectedClient]; `null` while asking. */
@@ -129,6 +138,29 @@ class RouterDetailViewModel(
     fun reboot() = action(success = R.string.rebooting) { session ->
         session.reboot()
         container.sessions.release(profileId) // the connection dies with the router
+    }
+
+    /**
+     * Pings the online clients every few seconds for as long as the caller keeps this running: the
+     * screen runs it only while the clients tab is on screen.
+     */
+    suspend fun pingClients() {
+        while (true) {
+            val targets = _state.value.clients.orEmpty()
+                .filter { it.online && Pinger.canPing(it.ipAddress) }
+                .associate { it.macAddress to it.ipAddress!! }
+            val answered = coroutineScope {
+                targets.map { (mac, ip) -> async(Dispatchers.IO) { mac.takeIf { Pinger.answers(ip) } } }.awaitAll().filterNotNull()
+            }
+            val now = System.currentTimeMillis()
+            _state.update { state ->
+                state.copy(
+                    pingReplies = (state.pingReplies + answered.associateWith { now }).filterKeys { it in targets },
+                    pingedAt = now,
+                )
+            }
+            delay(Pinger.INTERVAL_MILLIS)
+        }
     }
 
     fun selectClient(client: ConnectedClient) {

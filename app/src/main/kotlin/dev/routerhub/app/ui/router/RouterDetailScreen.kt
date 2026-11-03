@@ -62,6 +62,7 @@ import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -75,6 +76,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,7 +91,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.routerhub.api.Capability
 import dev.routerhub.api.ClientAction
@@ -99,6 +104,7 @@ import dev.routerhub.api.DslLineState
 import dev.routerhub.api.DslStats
 import dev.routerhub.api.Protocol
 import dev.routerhub.api.RouterStatus
+import dev.routerhub.api.SettingsGroup
 import dev.routerhub.api.SettingsPageInfo
 import dev.routerhub.api.WifiBand
 import dev.routerhub.api.WifiRadio
@@ -108,6 +114,7 @@ import dev.routerhub.app.data.DeviceBook
 import dev.routerhub.app.data.DeviceRow
 import dev.routerhub.app.data.DeviceState
 import dev.routerhub.app.data.KnownDevice
+import dev.routerhub.app.data.Pinger
 import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.InfoRow
@@ -202,11 +209,12 @@ fun RouterDetailScreen(
                 },
             )
             else -> {
-                val pages = state.settingsPages.groupBy { it.group }
-                val wireless = stringResource(R.string.tab_wireless)
-                val network = stringResource(R.string.tab_network)
-                val firewall = stringResource(R.string.tab_firewall)
-                val system = stringResource(R.string.tab_system)
+                val pages = state.settingsPages.groupBy { SettingsGroup.idOf(it.group) }
+                val groupTitles = mapOf(
+                    SettingsGroup.NETWORK to stringResource(R.string.tab_network),
+                    SettingsGroup.FIREWALL to stringResource(R.string.tab_firewall),
+                    SettingsGroup.SYSTEM to stringResource(R.string.tab_system),
+                )
                 val errorItem: LazyListScope.() -> Unit = {
                     state.error?.let { error ->
                         item {
@@ -254,9 +262,9 @@ fun RouterDetailScreen(
                         },
                     )
                     val radios = state.status?.wifiRadios.orEmpty()
-                    if (radios.isNotEmpty() || wireless in pages) {
+                    if (radios.isNotEmpty() || SettingsGroup.WIRELESS in pages) {
                         add(
-                            RouterTab(wireless) {
+                            RouterTab(stringResource(R.string.tab_wireless)) {
                                 errorItem()
                                 items(radios, key = { "radio:${it.id}" }) { radio ->
                                     WifiRow(
@@ -267,13 +275,13 @@ fun RouterDetailScreen(
                                         },
                                     )
                                 }
-                                settingsItems(pages[wireless].orEmpty(), onOpenSettings)
+                                settingsItems(pages[SettingsGroup.WIRELESS].orEmpty(), onOpenSettings)
                             },
                         )
                     }
                     if (Capability.CONNECTED_CLIENTS in factory.capabilities) {
                         add(
-                            RouterTab(stringResource(R.string.tab_clients)) {
+                            RouterTab(stringResource(R.string.tab_clients), whileShown = viewModel::pingClients) {
                                 errorItem()
                                 state.clients?.let { clients ->
                                     val rows = DeviceBook.rows(clients, profile.devices)
@@ -289,7 +297,9 @@ fun RouterDetailScreen(
                                             )
                                         }
                                     }
-                                    deviceRows(online, onClick = viewModel::selectClient)
+                                    val answering = online.filter { Pinger.isFresh(state.pingReplies[it.client.macAddress], state.pingedAt) }
+                                        .map { it.client.macAddress }.toSet()
+                                    deviceRows(online, answering, onClick = viewModel::selectClient)
                                     deviceSection(R.string.clients_blocked_away, rows.filter { it.state == DeviceState.BLOCKED }, viewModel::selectClient)
                                     deviceSection(R.string.clients_seen, rows.filter { it.state == DeviceState.SEEN }, viewModel::selectClient)
                                 }
@@ -297,9 +307,9 @@ fun RouterDetailScreen(
                         )
                     }
                     // A group of an extension's own gets a tab of its own, after the usual ones.
-                    (listOf(network, firewall, system).filter { it in pages } + (pages.keys - setOf(wireless, network, firewall, system))).forEach { group ->
+                    (groupTitles.keys.filter { it in pages } + (pages.keys - groupTitles.keys - SettingsGroup.WIRELESS)).forEach { group ->
                         add(
-                            RouterTab(group) {
+                            RouterTab(groupTitles[group] ?: group) {
                                 errorItem()
                                 settingsItems(pages.getValue(group), onOpenSettings)
                             },
@@ -307,6 +317,12 @@ fun RouterDetailScreen(
                     }
                 }
                 val pager = rememberPagerState(pageCount = { tabs.size })
+                val lifecycle = LocalLifecycleOwner.current.lifecycle
+                val currentTabs by rememberUpdatedState(tabs)
+                LaunchedEffect(pager.settledPage, lifecycle) {
+                    val work = currentTabs.getOrNull(pager.settledPage)?.whileShown ?: return@LaunchedEffect
+                    lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { work() }
+                }
                 val scope = rememberCoroutineScope()
                 Column(Modifier.padding(padding).fillMaxSize()) {
                     PrimaryScrollableTabRow(selectedTabIndex = pager.currentPage.coerceAtMost(tabs.lastIndex), edgePadding = 8.dp) {
@@ -418,7 +434,12 @@ private fun PasswordDialog(profile: RouterProfile, onSave: (String) -> Unit, onD
     )
 }
 
-private class RouterTab(val title: String, val content: LazyListScope.() -> Unit)
+/** [whileShown] runs while the tab is on screen and the app is visible, and is cancelled after. */
+private class RouterTab(
+    val title: String,
+    val whileShown: (suspend () -> Unit)? = null,
+    val content: LazyListScope.() -> Unit,
+)
 
 private fun LazyListScope.settingsItems(pages: List<SettingsPageInfo>, onOpen: (pageId: String) -> Unit) {
     items(pages, key = { "settings:${it.id}" }) { page ->
@@ -458,7 +479,7 @@ private fun Header(
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 val (color, label) = when (online) {
-                    true -> Color(0xFF2E9E5B) to if (wanConnected == false) stringResource(R.string.status_online_no_internet) else stringResource(R.string.status_online)
+                    true -> OnlineGreen to if (wanConnected == false) stringResource(R.string.status_online_no_internet) else stringResource(R.string.status_online)
                     false -> MaterialTheme.colorScheme.error to stringResource(R.string.status_unavailable)
                     null -> MaterialTheme.colorScheme.outline to stringResource(R.string.status_connecting)
                 }
@@ -590,15 +611,18 @@ private fun WifiRow(radio: WifiRadio, canToggle: Boolean, onToggle: (Boolean) ->
 private fun LazyListScope.deviceSection(@StringRes title: Int, rows: List<DeviceRow>, onClick: (ConnectedClient) -> Unit) {
     if (rows.isEmpty()) return
     item { SectionHeader(stringResource(title)) }
-    deviceRows(rows, onClick)
+    deviceRows(rows, emptySet(), onClick)
 }
 
-private fun LazyListScope.deviceRows(rows: List<DeviceRow>, onClick: (ConnectedClient) -> Unit) {
-    items(rows, key = { "client:${it.client.macAddress}" }) { row -> ClientRow(row, onClick = { onClick(row.client) }) }
+/** [answering]: MACs of the devices that answered a ping just now. */
+private fun LazyListScope.deviceRows(rows: List<DeviceRow>, answering: Set<String>, onClick: (ConnectedClient) -> Unit) {
+    items(rows, key = { "client:${it.client.macAddress}" }) { row ->
+        ClientRow(row, answersPing = row.client.macAddress in answering, onClick = { onClick(row.client) })
+    }
 }
 
 @Composable
-private fun ClientRow(row: DeviceRow, onClick: () -> Unit) {
+private fun ClientRow(row: DeviceRow, answersPing: Boolean, onClick: () -> Unit) {
     val client = row.client
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
@@ -614,6 +638,7 @@ private fun ClientRow(row: DeviceRow, onClick: () -> Unit) {
                         modifier = Modifier.size(16.dp),
                     )
                 }
+                if (answersPing) OnlineBadge()
             }
         },
         supportingContent = {
@@ -642,6 +667,23 @@ private fun ClientRow(row: DeviceRow, onClick: () -> Unit) {
         },
     )
 }
+
+/** The device answered a ping in the last few seconds. */
+@Composable
+private fun OnlineBadge() {
+    Surface(color = OnlineGreen.copy(alpha = 0.14f), shape = MaterialTheme.shapes.small) {
+        Row(
+            Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            StatusDot(OnlineGreen, Modifier.size(6.dp))
+            Text(stringResource(R.string.status_online), style = MaterialTheme.typography.labelSmall, color = OnlineGreen)
+        }
+    }
+}
+
+private val OnlineGreen = Color(0xFF2E9E5B)
 
 private const val MAX_DEVICE_NAME = 40
 

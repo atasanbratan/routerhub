@@ -305,7 +305,7 @@ private fun LocalError.message(): String = when (this) {
     LocalError.TooLong -> stringResource(R.string.too_long)
     is LocalError.TooShort -> pluralStringResource(R.plurals.at_least_characters, minLength, minLength)
     is LocalError.OverLength -> pluralStringResource(R.plurals.at_most_characters, maxLength, maxLength)
-    is LocalError.TooManyRows -> stringResource(R.string.too_many_rows, max, itemName)
+    is LocalError.TooManyRows -> pluralStringResource(R.plurals.too_many_rows, max, max)
 }
 
 /**

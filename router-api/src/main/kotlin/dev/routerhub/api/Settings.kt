@@ -14,10 +14,30 @@ public data class SettingsPageInfo @JvmOverloads constructor(
     /** Stable id, passed back to [RouterFirmware.readSettings] and [RouterFirmware.writeSettings]. */
     public val id: String,
     public val title: String,
-    /** Groups pages in the host UI, e.g. "Wireless", "Network", "System". */
+    /**
+     * Which tab the page goes in: one of the [SettingsGroup] ids, so the host can name the tab in
+     * the user's language. Any other text gets a tab of its own, titled with that text.
+     */
     public val group: String,
     public val summary: String? = null,
 )
+
+/** The host's own tabs for settings pages. */
+public object SettingsGroup {
+    public const val WIRELESS: String = "wireless"
+    public const val NETWORK: String = "network"
+    public const val FIREWALL: String = "firewall"
+    public const val SYSTEM: String = "system"
+
+    private val ids = setOf(WIRELESS, NETWORK, FIREWALL, SYSTEM)
+
+    /**
+     * The id for [group]. Extensions before API v5 named their groups in English ("Wireless",
+     * "Network", "Firewall", "System"); those still land in the right tab.
+     */
+    @JvmStatic
+    public fun idOf(group: String): String = group.trim().lowercase().takeIf { it in ids } ?: group
+}
 
 public data class SettingsPage @JvmOverloads constructor(
     public val info: SettingsPageInfo,

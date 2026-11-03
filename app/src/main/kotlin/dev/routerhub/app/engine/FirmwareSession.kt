@@ -14,6 +14,7 @@ import dev.routerhub.api.RouterSessionExpiredException
 import dev.routerhub.api.RouterStatus
 import dev.routerhub.api.SettingsPage
 import dev.routerhub.api.SettingsPageInfo
+import dev.routerhub.app.extension.ExtensionText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -54,17 +55,20 @@ class FirmwareSession private constructor(
 ) {
     private val mutex = Mutex()
 
+    /** Read on first use, off the main thread, inside [guard]. */
+    private val text by lazy { ExtensionText.load(factory.javaClass) }
+
     val capabilities: Set<Capability> get() = factory.capabilities
 
     suspend fun connect(): Unit = mutex.withLock { guard { firmware.login() } }
 
-    suspend fun status(): RouterStatus = call { it.getStatus() }
+    suspend fun status(): RouterStatus = call { text.status(it.getStatus()) }
 
     suspend fun dslStats(): DslStats = call { it.getDslStats() }
 
     suspend fun connectedClients(): List<ConnectedClient> = call { it.getConnectedClients() }
 
-    suspend fun clientActions(client: ConnectedClient): List<ClientAction> = call { it.clientActions(client) }
+    suspend fun clientActions(client: ConnectedClient): List<ClientAction> = call { it.clientActions(client).map(text::action) }
 
     /** Like [writeSettings], never replayed. */
     suspend fun runClientAction(client: ConnectedClient, actionId: String): Unit =
@@ -75,9 +79,9 @@ class FirmwareSession private constructor(
     suspend fun setWifiEnabled(radioId: String?, enabled: Boolean): Unit =
         call { it.setWifiEnabled(radioId, enabled) }
 
-    suspend fun settingsPages(): List<SettingsPageInfo> = call { it.listSettingsPages() }
+    suspend fun settingsPages(): List<SettingsPageInfo> = call { it.listSettingsPages().map(text::page) }
 
-    suspend fun readSettings(pageId: String): SettingsPage = call { it.readSettings(pageId) }
+    suspend fun readSettings(pageId: String): SettingsPage = call { text.page(it.readSettings(pageId)) }
 
     /**
      * Unlike reads, a write is never replayed after "session expired": if the router dropped the

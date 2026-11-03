@@ -44,8 +44,10 @@ Connect → recognise devices → change settings safely → block → unblock �
 - [ ] Test on Android 16 or newer (an API 37 image is installed; needs more free memory than this PC has with the VMs running)
 
 ## Update 0.3: reasons to come back
-- [ ] Stop relying on English text: stable group ids for tabs, translatable extension text
-- [ ] Translations: Spanish, Indonesian, Portuguese, Arabic (with right-to-left checks)
+- [x] Stop relying on English text: stable group ids for tabs, translatable extension text (API v5)
+- [x] App translations: Spanish, Indonesian, Portuguese, Arabic; right-to-left checked in Arabic (needs a native speaker's review)
+- [ ] Extension translations (i18n/*.json in each extension): page and field names still show in English
+- [x] Online badge on clients that answer ping, every 5 seconds while the Clients tab is open (try it on a real phone)
 - [ ] New-device alerts, on the home network only (about every 15 minutes)
 - [ ] Connection history, stating that it only covers what the app has seen
 - [ ] Pause, resume and schedules per device, starting on OpenWrt
