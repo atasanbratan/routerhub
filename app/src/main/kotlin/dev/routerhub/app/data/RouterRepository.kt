@@ -70,6 +70,7 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         .put("hostKey", p.hostKeyFingerprint ?: JSONObject.NULL)
         .put("passwordNeeded", p.passwordNeeded)
         .put("devices", JSONArray(p.devices.map(::deviceToJson)))
+        .put("alertNewDevices", p.alertNewDevices)
 
     private fun deviceToJson(d: KnownDevice) = JSONObject()
         .put("mac", d.mac)
@@ -104,6 +105,7 @@ class RouterRepository(context: Context, private val cipher: SecretCipher) {
         useHttps = o.optBoolean("useHttps"),
         hostKeyFingerprint = o.optString("hostKey").takeIf { it.isNotEmpty() && !o.isNull("hostKey") },
         passwordNeeded = o.optBoolean("passwordNeeded"),
+        alertNewDevices = o.optBoolean("alertNewDevices"),
         devices = o.optJSONArray("devices")?.let { array -> (0 until array.length()).map { deviceFromJson(array.getJSONObject(it)) } }.orEmpty(),
     )
 

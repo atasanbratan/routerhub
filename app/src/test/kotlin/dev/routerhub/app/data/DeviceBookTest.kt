@@ -84,4 +84,22 @@ class DeviceBookTest {
         assertTrue(kept.any { it.mac == "named" })
         assertTrue(kept.any { it.mac == "mac299" })
     }
+
+    @Test
+    fun `a device never seen on the router is new`() {
+        val book = DeviceBook.record(emptyList(), listOf(phone), now = 1)
+        assertEquals(listOf(laptop), DeviceBook.newDevices(book, listOf(phone, laptop)))
+    }
+
+    @Test
+    fun `the first look at a router only learns, it reports nothing`() {
+        assertTrue(DeviceBook.newDevices(emptyList(), listOf(phone, laptop)).isEmpty())
+    }
+
+    @Test
+    fun `a blocked device that is away isn't new`() {
+        val book = DeviceBook.record(emptyList(), listOf(phone), now = 1)
+        val away = ConnectedClient("02:00:00:00:00:09", online = false, internetBlocked = true)
+        assertTrue(DeviceBook.newDevices(book, listOf(phone, away)).isEmpty())
+    }
 }

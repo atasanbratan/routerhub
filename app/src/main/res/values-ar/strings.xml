@@ -129,7 +129,7 @@
     <string name="trust_sent">تُرسل كلمة المرور فقط إلى الراوتر الذي تخصّه، على العنوان الذي أدخلته. لا يملك RouterHub حسابات ولا خوادم، ولا يرسلها إلى أي مكان آخر.</string>
     <string name="trust_export">ملفات أجهزة الراوتر المصدَّرة لا تحتوي أبدًا على كلمات مرور. الراوتر المستورد منها يطلب كلمة مروره مجددًا.</string>
     <string name="trust_extensions">يأتي دعم أجهزة الراوتر من إضافات تعمل داخل التطبيق وتتلقى بيانات دخول أجهزة الراوتر التي تستخدمها. الإضافات الرسمية مفتوحة المصدر وموقّعة. لا تثبّت غيرها إلا من أشخاص تثق بهم.</string>
-    <string name="trust_permissions">لا يحتاج التطبيق إلا إلى الوصول إلى الشبكة: للوصول إلى الراوتر، ولمعرفة الشبكة التي تتصل بها حتى يجد عنوان الراوتر. ولا يطلب موقعك.</string>
+    <string name="trust_permissions">يحتاج التطبيق إلى الوصول إلى الشبكة: للوصول إلى الراوتر، ولمعرفة الشبكة التي تتصل بها حتى يجد عنوان الراوتر. ولا يطلب إذن الإشعارات إلا إذا شغّلت تنبيهات الأجهزة الجديدة، ولا يطلب موقعك أبدًا.</string>
     <string name="trust_no_ads">بلا إعلانات، وبلا تتبّع، وبلا اشتراك.</string>
     <string name="trust_update_check">يسأل هذا الإصدار أيضًا GitHub عن وجود إصدار أحدث. ولا يرسل أي شيء عنك أو عن أجهزة الراوتر الخاصة بك.</string>
     <string name="tested_routers">أجهزة الراوتر المختبرة</string>
@@ -284,5 +284,18 @@
         <item quantity="few">تم استيراد %d أجهزة راوتر. سيطلب كل منها كلمة مروره عند فتحه.</item>
         <item quantity="many">تم استيراد %d جهاز راوتر. سيطلب كل منها كلمة مروره عند فتحه.</item>
         <item quantity="other">تم استيراد %d جهاز راوتر. سيطلب كل منها كلمة مروره عند فتحه.</item>
+    </plurals>
+    <string name="alerts_switch">نبّهني إلى الأجهزة الجديدة</string>
+    <string name="alerts_switch_hint">يتحقق كل 15 دقيقة تقريبًا ما دام هذا الهاتف على شبكة الراوتر. الراوتر الذي يسمح بجلسة دخول واحدة فقط قد يُخرجك من صفحته.</string>
+    <string name="alerts_notifications_off">إشعارات RouterHub متوقفة. اسمح بها من إعدادات Android لتلقي التنبيهات.</string>
+    <string name="alerts_channel">الأجهزة الجديدة</string>
+    <string name="alerts_channel_summary">انضم إلى أحد أجهزة الراوتر لديك جهاز لم يره هذا الهاتف من قبل</string>
+    <plurals name="alerts_title">
+        <item quantity="zero">لا أجهزة جديدة على %2$s</item>
+        <item quantity="one">جهاز جديد على %2$s</item>
+        <item quantity="two">جهازان جديدان على %2$s</item>
+        <item quantity="few">%1$d أجهزة جديدة على %2$s</item>
+        <item quantity="many">%1$d جهازًا جديدًا على %2$s</item>
+        <item quantity="other">%1$d جهاز جديد على %2$s</item>
     </plurals>
 </resources>

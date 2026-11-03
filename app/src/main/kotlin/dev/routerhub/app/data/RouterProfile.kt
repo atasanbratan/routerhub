@@ -21,6 +21,8 @@ data class RouterProfile(
     /** Imported from a file, which holds no passwords: ask before the first connection. */
     val passwordNeeded: Boolean = false,
     val devices: List<KnownDevice> = emptyList(),
+    /** Check for new devices in the background and notify about them. */
+    val alertNewDevices: Boolean = false,
 ) {
     override fun toString() = "RouterProfile(id=$id, name=$name, firmware=$firmwareId, $protocol $host:$port)"
 }

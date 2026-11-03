@@ -129,7 +129,7 @@
     <string name="trust_sent">Cada contraseña solo se envía al router al que pertenece, en la dirección que escribiste. RouterHub no tiene cuentas ni servidores y no la envía a ningún otro sitio.</string>
     <string name="trust_export">Los archivos de routers exportados nunca contienen contraseñas. Un router importado desde uno vuelve a pedir su contraseña.</string>
     <string name="trust_extensions">La compatibilidad con cada router viene de extensiones, que se ejecutan dentro de la app y reciben el acceso de los routers que las usan. Las extensiones oficiales son de código abierto y están firmadas. Instala otras solo si confías en quien las hizo.</string>
-    <string name="trust_permissions">La app solo necesita acceso a la red: para llegar a tu router y para saber en qué red estás y así encontrar su dirección. No pide tu ubicación.</string>
+    <string name="trust_permissions">La app necesita acceso a la red: para llegar a tu router y para saber en qué red estás y así encontrar su dirección. Solo pide mostrar notificaciones si activas los avisos de dispositivos nuevos, y nunca pide tu ubicación.</string>
     <string name="trust_no_ads">Sin anuncios, sin analíticas y sin suscripción.</string>
     <string name="trust_update_check">Esta versión también pregunta a GitHub si hay una versión más nueva. No envía nada sobre ti ni sobre tus routers.</string>
     <string name="tested_routers">Routers probados</string>
@@ -263,5 +263,15 @@
         <item quantity="one">Se importó %d router. Pedirá su contraseña cuando lo abras.</item>
         <item quantity="many">Se importaron %d routers. Cada uno pedirá su contraseña cuando lo abras.</item>
         <item quantity="other">Se importaron %d routers. Cada uno pedirá su contraseña cuando lo abras.</item>
+    </plurals>
+    <string name="alerts_switch">Avisarme de dispositivos nuevos</string>
+    <string name="alerts_switch_hint">Comprueba cada 15 minutos aproximadamente mientras este teléfono está en la red del router. Un router que solo admite una sesión puede cerrar la tuya en su página web.</string>
+    <string name="alerts_notifications_off">Las notificaciones de RouterHub están desactivadas. Actívalas en los ajustes de Android para recibir avisos.</string>
+    <string name="alerts_channel">Dispositivos nuevos</string>
+    <string name="alerts_channel_summary">Un dispositivo que este teléfono no había visto se conectó a uno de tus routers</string>
+    <plurals name="alerts_title">
+        <item quantity="one">Dispositivo nuevo en %2$s</item>
+        <item quantity="many">%1$d dispositivos nuevos en %2$s</item>
+        <item quantity="other">%1$d dispositivos nuevos en %2$s</item>
     </plurals>
 </resources>

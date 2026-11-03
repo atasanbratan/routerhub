@@ -134,7 +134,7 @@
     <string name="trust_sent">A password is sent only to the router it belongs to, at the address you entered. RouterHub has no account and no server, and sends it nowhere else.</string>
     <string name="trust_export">Exported router files never contain passwords. A router imported from one asks for its password again.</string>
     <string name="trust_extensions">Router support comes from extensions, which run inside the app and receive the login of the routers that use them. The official extensions are open source and signed. Install others only from people you trust.</string>
-    <string name="trust_permissions">The app needs only network access: to reach your router, and to see which network you are on so it can find the router\'s address. It doesn\'t ask for your location.</string>
+    <string name="trust_permissions">The app needs network access: to reach your router, and to see which network you are on so it can find the router\'s address. It asks to show notifications only if you turn on new-device alerts, and it never asks for your location.</string>
     <string name="trust_no_ads">No ads, no analytics and no subscription.</string>
     <string name="trust_update_check">This version also asks GitHub whether a newer version is out. It sends nothing about you or your routers.</string>
     <string name="tested_routers">Tested routers</string>
@@ -261,5 +261,14 @@
     <plurals name="routers_imported">
         <item quantity="one">Imported %d router. Each one asks for its password when you open it.</item>
         <item quantity="other">Imported %d routers. Each one asks for its password when you open it.</item>
+    </plurals>
+    <string name="alerts_switch">Alert me about new devices</string>
+    <string name="alerts_switch_hint">Checks about every 15 minutes while this phone is on the router\'s network. A router that allows one login at a time may sign you out of its web page.</string>
+    <string name="alerts_notifications_off">Notifications are off for RouterHub. Allow them in Android settings to get alerts.</string>
+    <string name="alerts_channel">New devices</string>
+    <string name="alerts_channel_summary">A device this phone hasn\'t seen before joined one of your routers</string>
+    <plurals name="alerts_title">
+        <item quantity="one">New device on %2$s</item>
+        <item quantity="other">%1$d new devices on %2$s</item>
     </plurals>
 </resources>

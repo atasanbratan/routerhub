@@ -10,6 +10,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.routerhub.app.RouterHubApp
+import dev.routerhub.app.alerts.NewDeviceAlerts
 import dev.routerhub.app.ui.theme.RouterHubTheme
 import dev.routerhub.app.ui.theme.isDark
 
@@ -18,6 +19,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val container = (application as RouterHubApp).container
+        // A new-device notification names the router to open; only on a fresh start, not after rotation.
+        val openRouter = intent.getStringExtra(NewDeviceAlerts.EXTRA_ROUTER_ID).takeIf { savedInstanceState == null }
         setContent {
             val themeMode by container.preferences.themeMode.collectAsStateWithLifecycle()
             val dynamicColor by container.preferences.dynamicColor.collectAsStateWithLifecycle()
@@ -35,7 +38,7 @@ class MainActivity : ComponentActivity() {
             }
 
             RouterHubTheme(darkTheme = dark, dynamicColor = dynamicColor, pureBlack = pureBlack) {
-                RouterHubNavHost(container)
+                RouterHubNavHost(container, openRouter)
             }
         }
     }

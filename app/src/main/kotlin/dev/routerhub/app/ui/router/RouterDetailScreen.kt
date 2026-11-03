@@ -1,10 +1,14 @@
 package dev.routerhub.app.ui.router
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.os.Build
 import android.text.format.DateUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,6 +40,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Public
@@ -85,6 +91,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -110,6 +117,7 @@ import dev.routerhub.api.WifiBand
 import dev.routerhub.api.WifiRadio
 import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
+import dev.routerhub.app.alerts.NewDeviceAlerts
 import dev.routerhub.app.data.DeviceBook
 import dev.routerhub.app.data.DeviceRow
 import dev.routerhub.app.data.DeviceState
@@ -222,6 +230,9 @@ fun RouterDetailScreen(
                         }
                     }
                 }
+                val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                    if (granted) viewModel.setNewDeviceAlerts(true) else viewModel.notificationsRefused()
+                }
                 val tabs = buildList {
                     add(
                         RouterTab(stringResource(R.string.tab_device)) {
@@ -283,6 +294,19 @@ fun RouterDetailScreen(
                         add(
                             RouterTab(stringResource(R.string.tab_clients), whileShown = viewModel::pingClients) {
                                 errorItem()
+                                item {
+                                    AlertsRow(
+                                        enabled = profile.alertNewDevices,
+                                        notificationsOff = profile.alertNewDevices && !NewDeviceAlerts.canNotify(context),
+                                        onChange = { on ->
+                                            when {
+                                                !on || NewDeviceAlerts.canNotify(context) -> viewModel.setNewDeviceAlerts(on)
+                                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                                                    askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                            }
+                                        },
+                                    )
+                                }
                                 state.clients?.let { clients ->
                                     val rows = DeviceBook.rows(clients, profile.devices)
                                     val online = rows.filter { it.state == DeviceState.ONLINE }
@@ -665,6 +689,24 @@ private fun ClientRow(row: DeviceRow, answersPing: Boolean, onClick: () -> Unit)
                 color = if (client.internetBlocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
+    )
+}
+
+/** Opt-in for background checks that notify about devices this phone has never seen on the router. */
+@Composable
+private fun AlertsRow(enabled: Boolean, notificationsOff: Boolean, onChange: (Boolean) -> Unit) {
+    ListItem(
+        modifier = Modifier.toggleable(value = enabled, role = Role.Switch, onValueChange = onChange),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        leadingContent = { Icon(Icons.Outlined.NotificationsActive, contentDescription = null) },
+        headlineContent = { Text(stringResource(R.string.alerts_switch)) },
+        supportingContent = {
+            Text(
+                stringResource(if (notificationsOff) R.string.alerts_notifications_off else R.string.alerts_switch_hint),
+                color = if (notificationsOff) MaterialTheme.colorScheme.error else Color.Unspecified,
+            )
+        },
+        trailingContent = { Switch(checked = enabled, onCheckedChange = null) },
     )
 }
 

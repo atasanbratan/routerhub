@@ -129,7 +129,7 @@
     <string name="trust_sent">Kata sandi hanya dikirim ke router pemiliknya, di alamat yang Anda masukkan. RouterHub tidak punya akun maupun server, dan tidak mengirimkannya ke mana pun.</string>
     <string name="trust_export">File router yang diekspor tidak pernah berisi kata sandi. Router yang diimpor dari file itu akan meminta kata sandinya lagi.</string>
     <string name="trust_extensions">Dukungan router berasal dari ekstensi, yang berjalan di dalam aplikasi dan menerima login router yang memakainya. Ekstensi resmi bersifat sumber terbuka dan bertanda tangan. Pasang ekstensi lain hanya dari orang yang Anda percayai.</string>
-    <string name="trust_permissions">Aplikasi ini hanya memerlukan akses jaringan: untuk menghubungi router Anda, dan untuk melihat jaringan yang Anda pakai agar bisa menemukan alamat router. Aplikasi ini tidak meminta lokasi Anda.</string>
+    <string name="trust_permissions">Aplikasi ini memerlukan akses jaringan: untuk menghubungi router Anda, dan untuk melihat jaringan yang Anda pakai agar bisa menemukan alamat router. Aplikasi hanya meminta izin notifikasi jika Anda menyalakan pemberitahuan perangkat baru, dan tidak pernah meminta lokasi Anda.</string>
     <string name="trust_no_ads">Tanpa iklan, tanpa analitik, dan tanpa langganan.</string>
     <string name="trust_update_check">Versi ini juga menanyakan ke GitHub apakah ada versi yang lebih baru. Tidak ada informasi tentang Anda atau router Anda yang dikirim.</string>
     <string name="tested_routers">Router yang diuji</string>
@@ -249,5 +249,13 @@
     </plurals>
     <plurals name="routers_imported">
         <item quantity="other">%d router diimpor. Masing-masing akan meminta kata sandinya saat Anda membukanya.</item>
+    </plurals>
+    <string name="alerts_switch">Beri tahu saya tentang perangkat baru</string>
+    <string name="alerts_switch_hint">Memeriksa sekitar setiap 15 menit selama ponsel ini berada di jaringan router. Router yang hanya mengizinkan satu login sekaligus bisa mengeluarkan Anda dari halaman webnya.</string>
+    <string name="alerts_notifications_off">Notifikasi RouterHub nonaktif. Izinkan di setelan Android untuk mendapat pemberitahuan.</string>
+    <string name="alerts_channel">Perangkat baru</string>
+    <string name="alerts_channel_summary">Perangkat yang belum pernah dilihat ponsel ini bergabung ke salah satu router Anda</string>
+    <plurals name="alerts_title">
+        <item quantity="other">%1$d perangkat baru di %2$s</item>
     </plurals>
 </resources>

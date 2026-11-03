@@ -129,7 +129,7 @@
     <string name="trust_sent">Cada senha só é enviada ao roteador a que pertence, no endereço que você digitou. O RouterHub não tem conta nem servidor e não a envia para nenhum outro lugar.</string>
     <string name="trust_export">Os arquivos de roteadores exportados nunca contêm senhas. Um roteador importado de um deles pede a senha de novo.</string>
     <string name="trust_extensions">O suporte a cada roteador vem de extensões, que rodam dentro do app e recebem o login dos roteadores que as usam. As extensões oficiais são de código aberto e assinadas. Instale outras só de pessoas em quem você confia.</string>
-    <string name="trust_permissions">O app só precisa de acesso à rede: para chegar ao seu roteador e para ver em que rede você está e assim achar o endereço dele. Ele não pede sua localização.</string>
+    <string name="trust_permissions">O app precisa de acesso à rede: para chegar ao seu roteador e para ver em que rede você está e assim achar o endereço dele. Ele só pede para mostrar notificações se você ligar os avisos de aparelhos novos, e nunca pede sua localização.</string>
     <string name="trust_no_ads">Sem anúncios, sem rastreamento e sem assinatura.</string>
     <string name="trust_update_check">Esta versão também pergunta ao GitHub se existe uma versão mais nova. Ela não envia nada sobre você nem sobre seus roteadores.</string>
     <string name="tested_routers">Roteadores testados</string>
@@ -263,5 +263,15 @@
         <item quantity="one">%d roteador importado. Ele pede a senha quando você o abrir.</item>
         <item quantity="many">%d roteadores importados. Cada um pede a senha quando você o abrir.</item>
         <item quantity="other">%d roteadores importados. Cada um pede a senha quando você o abrir.</item>
+    </plurals>
+    <string name="alerts_switch">Avisar sobre aparelhos novos</string>
+    <string name="alerts_switch_hint">Verifica a cada 15 minutos mais ou menos enquanto este celular está na rede do roteador. Um roteador que aceita um login por vez pode encerrar sua sessão na página dele.</string>
+    <string name="alerts_notifications_off">As notificações do RouterHub estão desligadas. Permita nas configurações do Android para receber avisos.</string>
+    <string name="alerts_channel">Aparelhos novos</string>
+    <string name="alerts_channel_summary">Um aparelho que este celular nunca viu entrou em um dos seus roteadores</string>
+    <plurals name="alerts_title">
+        <item quantity="one">Aparelho novo em %2$s</item>
+        <item quantity="many">%1$d aparelhos novos em %2$s</item>
+        <item quantity="other">%1$d aparelhos novos em %2$s</item>
     </plurals>
 </resources>

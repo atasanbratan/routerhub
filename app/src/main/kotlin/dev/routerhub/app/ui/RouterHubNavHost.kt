@@ -16,6 +16,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -64,8 +65,11 @@ private object Routes {
  * full-screen detail pages pushed over it.
  */
 @Composable
-fun RouterHubNavHost(container: AppContainer) {
+fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
     val navController = rememberNavController()
+    LaunchedEffect(openRouter) {
+        if (openRouter != null && container.routers.get(openRouter) != null) navController.navigate(Routes.router(openRouter))
+    }
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
     val showBottomBar = TopLevel.entries.any { it.route == currentRoute }

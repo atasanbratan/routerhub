@@ -45,6 +45,16 @@ object DeviceBook {
         return kept + plain.sortedByDescending { it.lastSeen ?: 0 }.take((MAX_DEVICES - kept.size).coerceAtLeast(0))
     }
 
+    /**
+     * The online [clients] this phone has never seen on the router. Nothing is new while [devices] is
+     * still empty: the first look at a router only learns what is already there.
+     */
+    fun newDevices(devices: List<KnownDevice>, clients: List<ConnectedClient>): List<ConnectedClient> {
+        if (devices.isEmpty()) return emptyList()
+        val known = devices.mapTo(HashSet()) { it.mac }
+        return clients.filter { it.online && it.macAddress !in known }
+    }
+
     /** Sets one device, adding it if it wasn't remembered yet. */
     fun update(devices: List<KnownDevice>, mac: String, change: (KnownDevice) -> KnownDevice): List<KnownDevice> {
         val updated = change(devices.firstOrNull { it.mac == mac } ?: KnownDevice(mac))

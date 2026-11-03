@@ -239,6 +239,14 @@ class RouterDetailViewModel(
 
     fun messageShown() = _state.update { it.copy(message = null) }
 
+    fun setNewDeviceAlerts(enabled: Boolean) {
+        val id = _state.value.profile?.id ?: return
+        container.routers.get(id)?.let { container.routers.upsert(it.copy(alertNewDevices = enabled)) }
+    }
+
+    fun notificationsRefused() =
+        _state.update { it.copy(message = container.context.getString(R.string.alerts_notifications_off)) }
+
     fun delete() {
         container.sessions.release(profileId)
         container.routers.delete(profileId)

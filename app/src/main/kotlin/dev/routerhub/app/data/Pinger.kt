@@ -3,7 +3,7 @@ package dev.routerhub.app.data
 import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
-import android.system.StructTimeval
+import android.system.StructPollfd
 import java.io.FileDescriptor
 import java.io.IOException
 import java.net.InetAddress
@@ -70,7 +70,12 @@ object Pinger {
         while (true) {
             val left = deadline - System.currentTimeMillis()
             if (left <= 0) return false
-            Os.setsockoptTimeval(socket, OsConstants.SOL_SOCKET, OsConstants.SO_RCVTIMEO, StructTimeval.fromMillis(left))
+            // poll, not a receive timeout: setsockoptTimeval needs Android 10.
+            val ready = StructPollfd().apply {
+                fd = socket
+                events = OsConstants.POLLIN.toShort()
+            }
+            if (Os.poll(arrayOf(ready), left.toInt()) == 0) return false
             val size = Os.recvfrom(socket, reply, 0, reply.size, 0, from)
             // Only our own reply counts: a late one to an earlier ping can reach a socket that reuses its identifier.
             if (isReplyTo(reply, size, sequence) && from.address == target) return true
