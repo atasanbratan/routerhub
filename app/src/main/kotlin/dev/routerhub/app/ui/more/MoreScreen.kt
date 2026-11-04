@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,6 +58,7 @@ import dev.routerhub.app.data.ThemeMode
 import dev.routerhub.app.ui.components.RouterCover
 import dev.routerhub.app.ui.lock.AppLock
 import dev.routerhub.app.ui.lock.rememberDeviceAuth
+import dev.routerhub.app.update.UpdateChecks
 import kotlinx.coroutines.launch
 
 /** Mihon-style "More": a logo header, then a flat list of settings. */
@@ -155,8 +157,19 @@ fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: ()
                 leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null) },
                 modifier = Modifier.clickable { importFile.launch(arrayOf("application/json", "application/octet-stream")) },
             )
-            if (BuildConfig.INSTALLABLE_EXTENSIONS) {
+            if (UpdateChecks.available) {
                 HorizontalDivider()
+                val autoUpdates by prefs.autoUpdates.collectAsStateWithLifecycle()
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = { Text(stringResource(R.string.auto_updates)) },
+                    supportingContent = { Text(stringResource(R.string.auto_updates_summary)) },
+                    leadingContent = { Icon(Icons.Outlined.Update, contentDescription = null) },
+                    trailingContent = { Switch(checked = autoUpdates, onCheckedChange = prefs::setAutoUpdates) },
+                    modifier = Modifier.clickable { prefs.setAutoUpdates(!autoUpdates) },
+                )
+            }
+            if (BuildConfig.INSTALLABLE_EXTENSIONS) {
                 ListItem(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     headlineContent = { Text(stringResource(R.string.extension_repos)) },

@@ -14,6 +14,8 @@
 
     <!-- Browse installs extensions from the repositories by handing their APK to the system installer. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- The extension gear's Uninstall, which asks the system to remove an extension package. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <application>
         <!-- Shares a downloaded extension APK with the system installer, and nothing else. -->

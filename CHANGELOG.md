@@ -10,6 +10,24 @@ Add them under **Unreleased** as you go; releasing renames that heading to the n
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-04
+
+### Added
+
+- **Automatic updates, as in Mihon** (GitHub version): RouterHub looks for a new version when you open it
+  (at most once a day) and about twice a day in the background, and downloads it inside the app with a
+  progress notification before handing it to Android's installer. A download that isn't RouterHub signed
+  with the same key is refused.
+- **Extension updates:** the background check announces extension updates in a notification that opens
+  Browse, Browse shows how many there are on its tab, and **Update all** updates them together.
+- A **Check for updates automatically** switch in More turns all of this off.
+- **Extension details,** as in Mihon: the gear on an installed extension opens its page, with
+  **Uninstall**, **App info**, its version, trust and signer, and the router types it adds.
+
+### Changed
+
+- In Browse, an extension with an update is listed under Updates only, not again under Installed.
+
 ## [0.4.0] - 2026-11-04
 
 ### Added

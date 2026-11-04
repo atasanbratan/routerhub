@@ -300,5 +300,24 @@
     <string name="extension_repos_warning">Ekstensi berjalan di dalam RouterHub dan menerima kata sandi router yang memakainya. Tambahkan repositori hanya dari orang yang Anda percayai. Memasang dari repositori tidak pernah membuat ekstensi dipercaya dengan sendirinya: ekstensi yang tidak ditandatangani dengan kunci resmi tetap bertanya dulu.</string>
     <string name="extension_repos_empty">Tidak ada repositori. Jelajahi hanya menampilkan ekstensi yang sudah terpasang.</string>
     <string name="extension_repo_remove">Hapus %1$s</string>
-    <string name="trust_extension_index">Saat Anda membuka Jelajahi, versi ini mengunduh daftar ekstensi dari repositori Anda (secara bawaan, repositori resmi di GitHub). Tidak ada data tentang Anda atau router Anda yang dikirim.</string>
+    <string name="trust_extension_index">Saat Anda membuka RouterHub atau Jelajahi, dan sekitar dua kali sehari selama pemeriksaan pembaruan otomatis aktif, versi ini mengunduh daftar ekstensi dari repositori Anda (secara bawaan, repositori resmi di GitHub). Tidak ada data tentang Anda atau router Anda yang dikirim.</string>
+    <string name="auto_updates">Periksa pembaruan otomatis</string>
+    <string name="auto_updates_summary">Mencari versi baru RouterHub dan ekstensinya sekitar dua kali sehari</string>
+    <string name="updates_channel">Pembaruan</string>
+    <string name="updates_channel_summary">Versi baru RouterHub dan ekstensinya</string>
+    <string name="app_update_title">RouterHub %1$s tersedia</string>
+    <string name="app_update_text">Ketuk untuk melihat yang baru</string>
+    <string name="update_downloading">Mengunduh RouterHub %1$s</string>
+    <string name="update_downloaded">Unduhan selesai</string>
+    <string name="update_downloaded_text">Ketuk untuk memasang RouterHub %1$s</string>
+    <string name="update_download_failed">Tidak dapat mengunduh pembaruan</string>
+    <string name="update_download_failed_text">Ketuk untuk membuka halaman rilis</string>
+    <string name="update_wrong_signature">Unduhan tidak ditandatangani dengan kunci aplikasi ini, jadi tidak dipasang</string>
+    <string name="extensions_update_all">Perbarui semua</string>
+    <plurals name="extension_updates_title">
+        <item quantity="other">%d pembaruan ekstensi tersedia</item>
+    </plurals>
+    <string name="extension_info">Info ekstensi</string>
+    <string name="extension_uninstall">Copot</string>
+    <string name="extension_app_info">Info aplikasi</string>
 </resources>

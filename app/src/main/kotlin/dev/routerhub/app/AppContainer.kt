@@ -10,7 +10,12 @@ import dev.routerhub.app.extension.ExtensionRepos
 import dev.routerhub.app.extension.ExtensionStore
 import dev.routerhub.app.ui.lock.AppLock
 import kotlinx.coroutines.CoroutineScope
+import dev.routerhub.app.update.AppUpdateDownloader
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 
 /** Manual dependency graph: one instance of each service for the whole process. */
 class AppContainer(context: Context, scope: CoroutineScope) {
@@ -25,6 +30,13 @@ class AppContainer(context: Context, scope: CoroutineScope) {
 
     /** Only builds that can install extensions read the repositories; the Play build never does. */
     val store = ExtensionStore(context.applicationContext, extensionRepos, scope)
+
+    /** How many installed extensions the repositories have an update for, for the badge on Browse. */
+    val extensionUpdateCount: StateFlow<Int> = combine(extensions.extensions, store.available) { installed, available ->
+        ExtensionStore.updates(installed, available).size
+    }.stateIn(scope, SharingStarted.Eagerly, 0)
+
+    val appUpdates = AppUpdateDownloader(context.applicationContext, scope)
     val routers = RouterRepository(context, SecretCipher())
     val sessions = SessionManager(scope)
     val preferences = AppPreferences(context)

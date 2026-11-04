@@ -313,5 +313,25 @@
     <string name="extension_repos_warning">An extension runs inside RouterHub and receives the passwords of the routers that use it. Add repositories only from people you trust. Installing from a repository never trusts an extension by itself: one that isn\'t signed with the official key still asks first.</string>
     <string name="extension_repos_empty">No repositories. Browse lists only the extensions already installed.</string>
     <string name="extension_repo_remove">Remove %1$s</string>
-    <string name="trust_extension_index">When you open Browse, this version downloads the extension list from your extension repositories (by default the official one on GitHub). Nothing about you or your routers is sent.</string>
+    <string name="trust_extension_index">When you open RouterHub or Browse, and about twice a day while automatic update checks are on, this version downloads the extension list from your extension repositories (by default the official one on GitHub). Nothing about you or your routers is sent.</string>
+    <string name="auto_updates">Check for updates automatically</string>
+    <string name="auto_updates_summary">Looks for new versions of RouterHub and its extensions about twice a day</string>
+    <string name="updates_channel">Updates</string>
+    <string name="updates_channel_summary">New versions of RouterHub and its extensions</string>
+    <string name="app_update_title">RouterHub %1$s is available</string>
+    <string name="app_update_text">Tap to see what\'s new</string>
+    <string name="update_downloading">Downloading RouterHub %1$s</string>
+    <string name="update_downloaded">Download complete</string>
+    <string name="update_downloaded_text">Tap to install RouterHub %1$s</string>
+    <string name="update_download_failed">Couldn\'t download the update</string>
+    <string name="update_download_failed_text">Tap to open the release page</string>
+    <string name="update_wrong_signature">The download isn\'t signed with this app\'s key, so it wasn\'t installed</string>
+    <string name="extensions_update_all">Update all</string>
+    <plurals name="extension_updates_title">
+        <item quantity="one">%d extension update available</item>
+        <item quantity="other">%d extension updates available</item>
+    </plurals>
+    <string name="extension_info">Extension info</string>
+    <string name="extension_uninstall">Uninstall</string>
+    <string name="extension_app_info">App info</string>
 </resources>

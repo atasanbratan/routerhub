@@ -324,5 +324,27 @@
     <string name="extension_repos_warning">Расширение работает внутри RouterHub и получает пароли роутеров, которые его используют. Добавляйте репозитории только от тех, кому доверяете. Установка из репозитория сама по себе не делает расширение доверенным: если оно не подписано официальным ключом, приложение всё равно спросит вас.</string>
     <string name="extension_repos_empty">Репозиториев нет. «Обзор» показывает только уже установленные расширения.</string>
     <string name="extension_repo_remove">Удалить %1$s</string>
-    <string name="trust_extension_index">Когда вы открываете «Обзор», эта версия скачивает список расширений из ваших репозиториев (по умолчанию — официального на GitHub). Ничего о вас и ваших роутерах не отправляется.</string>
+    <string name="trust_extension_index">Когда вы открываете RouterHub или «Обзор», а также примерно два раза в день, пока включена автоматическая проверка обновлений, эта версия скачивает список расширений из ваших репозиториев (по умолчанию — официального на GitHub). Ничего о вас и ваших роутерах не отправляется.</string>
+    <string name="auto_updates">Проверять обновления автоматически</string>
+    <string name="auto_updates_summary">Ищет новые версии RouterHub и расширений примерно два раза в день</string>
+    <string name="updates_channel">Обновления</string>
+    <string name="updates_channel_summary">Новые версии RouterHub и расширений</string>
+    <string name="app_update_title">Доступен RouterHub %1$s</string>
+    <string name="app_update_text">Нажмите, чтобы узнать, что нового</string>
+    <string name="update_downloading">Загрузка RouterHub %1$s</string>
+    <string name="update_downloaded">Загрузка завершена</string>
+    <string name="update_downloaded_text">Нажмите, чтобы установить RouterHub %1$s</string>
+    <string name="update_download_failed">Не удалось скачать обновление</string>
+    <string name="update_download_failed_text">Нажмите, чтобы открыть страницу выпуска</string>
+    <string name="update_wrong_signature">Скачанный файл не подписан ключом этого приложения, поэтому он не установлен</string>
+    <string name="extensions_update_all">Обновить все</string>
+    <plurals name="extension_updates_title">
+        <item quantity="one">Доступно %d обновление расширений</item>
+        <item quantity="few">Доступно %d обновления расширений</item>
+        <item quantity="many">Доступно %d обновлений расширений</item>
+        <item quantity="other">Доступно %d обновления расширений</item>
+    </plurals>
+    <string name="extension_info">О расширении</string>
+    <string name="extension_uninstall">Удалить</string>
+    <string name="extension_app_info">О приложении</string>
 </resources>

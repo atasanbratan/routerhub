@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Only the folder ExtensionStore downloads extension APKs to. -->
+<!-- Only the folders extension APKs and app updates are downloaded to. -->
 <paths>
     <cache-path name="store" path="store/" />
+    <cache-path name="updates" path="updates/" />
 </paths>

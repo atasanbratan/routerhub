@@ -2,6 +2,7 @@ package dev.routerhub.app
 
 import android.app.Application
 import dev.routerhub.app.alerts.NewDeviceAlerts
+import dev.routerhub.app.update.UpdateChecks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +26,9 @@ class RouterHubApp : Application() {
                 .map { profiles -> profiles.filter { it.alertNewDevices }.map { it.id } }
                 .distinctUntilChanged()
                 .collect { NewDeviceAlerts.sync(this@RouterHubApp, container.routers.profiles.value) }
+        }
+        appScope.launch {
+            container.preferences.autoUpdates.collect { UpdateChecks.sync(this@RouterHubApp, it) }
         }
     }
 }

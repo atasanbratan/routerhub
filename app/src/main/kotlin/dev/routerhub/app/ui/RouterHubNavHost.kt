@@ -10,6 +10,8 @@ import androidx.compose.material.icons.filled.Router
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.Router
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -18,9 +20,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,17 +36,26 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.routerhub.app.AppContainer
+import dev.routerhub.app.BuildConfig
 import dev.routerhub.app.R
 import dev.routerhub.app.ui.add.AddRouterScreen
 import dev.routerhub.app.ui.browse.BrowseScreen
+import dev.routerhub.app.ui.browse.ExtensionDetailsScreen
 import dev.routerhub.app.ui.browse.ExtensionReposScreen
 import dev.routerhub.app.ui.more.AboutScreen
 import dev.routerhub.app.ui.more.LicensesScreen
 import dev.routerhub.app.ui.more.MoreScreen
+import dev.routerhub.app.ui.more.NewUpdateDialog
 import dev.routerhub.app.ui.more.TrustScreen
 import dev.routerhub.app.ui.router.RouterDetailScreen
 import dev.routerhub.app.ui.routers.RoutersScreen
 import dev.routerhub.app.ui.settings.SettingsPageScreen
+import dev.routerhub.app.update.AppRelease
+import dev.routerhub.app.update.AppUpdateChecker
+import dev.routerhub.app.update.UpdateChecks
+import dev.routerhub.app.update.UpdateResult
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 
 private enum class TopLevel(val route: String, @StringRes val label: Int, val selected: ImageVector, val unselected: ImageVector) {
     ROUTERS("routers", R.string.routers, Icons.Filled.Router, Icons.Outlined.Router),
@@ -56,6 +72,8 @@ private object Routes {
     const val LICENSES = "about/licenses"
     const val TRUST = "more/trust"
     const val REPOS = "browse/repos"
+    const val EXTENSION = "browse/extension/{package}"
+    fun extension(packageName: String) = "browse/extension/$packageName"
     fun router(id: String) = "router/$id"
     fun settings(id: String, page: String) = "router/$id/settings/$page"
     fun edit(id: String) = "edit/$id"
@@ -67,10 +85,21 @@ private object Routes {
  * full-screen detail pages pushed over it.
  */
 @Composable
-fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
+fun RouterHubNavHost(container: AppContainer, openRouter: String? = null, open: String? = null) {
     val navController = rememberNavController()
+    val uriHandler = LocalUriHandler.current
+    var newRelease by remember { mutableStateOf<AppRelease?>(null) }
+    var browseTab by remember { mutableStateOf<Int?>(null) }
+    val updateCount by container.extensionUpdateCount.collectAsStateWithLifecycle()
     LaunchedEffect(openRouter) {
         if (openRouter != null && container.routers.get(openRouter) != null) navController.navigate(Routes.router(openRouter))
+    }
+    LaunchedEffect(open) {
+        if (open == UpdateChecks.OPEN_EXTENSIONS) {
+            browseTab = 1
+            navController.navigate(TopLevel.BROWSE.route)
+        }
+        newRelease = startupUpdateCheck(container, askedFor = open == UpdateChecks.OPEN_APP_UPDATE)
     }
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -93,7 +122,14 @@ fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(if (selected) tab.selected else tab.unselected, contentDescription = null) },
+                            icon = {
+                                val icon = if (selected) tab.selected else tab.unselected
+                                if (tab == TopLevel.BROWSE && updateCount > 0) {
+                                    BadgedBox(badge = { Badge { Text("$updateCount") } }) { Icon(icon, contentDescription = null) }
+                                } else {
+                                    Icon(icon, contentDescription = null)
+                                }
+                            },
                             label = { Text(stringResource(tab.label)) },
                         )
                     }
@@ -117,8 +153,11 @@ fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
             composable(TopLevel.BROWSE.route) {
                 BrowseScreen(
                     container = container,
+                    requestedTab = browseTab,
+                    onTabShown = { browseTab = null },
                     onAddRouter = { navController.navigate(Routes.add(it)) },
                     onOpenRepos = { navController.navigate(Routes.REPOS) },
+                    onOpenExtension = { navController.navigate(Routes.extension(it)) },
                 )
             }
             composable(TopLevel.MORE.route) {
@@ -129,6 +168,13 @@ fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
                     onOpenRepos = { navController.navigate(Routes.REPOS) },
                 )
             }
+            composable(Routes.EXTENSION, arguments = listOf(navArgument("package") { type = NavType.StringType })) { entry ->
+                ExtensionDetailsScreen(
+                    container = container,
+                    packageName = entry.arguments?.getString("package").orEmpty(),
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable(Routes.REPOS) {
                 ExtensionReposScreen(container = container, onBack = { navController.popBackStack() })
             }
@@ -137,6 +183,7 @@ fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
             }
             composable(Routes.ABOUT) {
                 AboutScreen(
+                    container = container,
                     onBack = { navController.popBackStack() },
                     onOpenLicenses = { navController.navigate(Routes.LICENSES) },
                 )
@@ -194,4 +241,37 @@ fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
             }
         }
     }
+
+    newRelease?.let { release ->
+        NewUpdateDialog(
+            release = release,
+            onDownload = {
+                container.appUpdates.download(release)
+                newRelease = null
+            },
+            onOpenRelease = { uriHandler.openUri(release.releaseUrl) },
+            onDismiss = { newRelease = null },
+        )
+    }
+}
+
+/**
+ * Mihon's check on start: at most once a day while automatic updates are on, or right away when an
+ * update notification was tapped. Also refreshes the extension list, for the badge on Browse.
+ */
+private suspend fun startupUpdateCheck(container: AppContainer, askedFor: Boolean): AppRelease? {
+    val prefs = container.preferences
+    if (BuildConfig.INSTALLABLE_EXTENSIONS && prefs.autoUpdates.value) container.store.refreshIfStale()
+    if (!BuildConfig.UPDATE_CHECKER) return null
+    val now = System.currentTimeMillis()
+    if (!askedFor && (!prefs.autoUpdates.value || now - prefs.lastAppUpdateCheck < TimeUnit.DAYS.toMillis(1))) return null
+    prefs.lastAppUpdateCheck = now
+    val result = try {
+        AppUpdateChecker().check()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        return null
+    }
+    return (result as? UpdateResult.NewUpdate)?.release
 }

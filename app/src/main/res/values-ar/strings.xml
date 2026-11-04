@@ -340,5 +340,29 @@
     <string name="extension_repos_warning">تعمل الإضافة داخل RouterHub وتتلقى كلمات مرور أجهزة الراوتر التي تستخدمها. أضف مستودعات فقط من أشخاص تثق بهم. التثبيت من مستودع لا يجعل الإضافة موثوقة من تلقاء نفسه: الإضافة غير الموقّعة بالمفتاح الرسمي ستسألك أولاً.</string>
     <string name="extension_repos_empty">لا توجد مستودعات. يعرض «استكشاف» الإضافات المثبتة فقط.</string>
     <string name="extension_repo_remove">إزالة %1$s</string>
-    <string name="trust_extension_index">عند فتح «استكشاف»، ينزّل هذا الإصدار قائمة الإضافات من مستودعاتك (افتراضيًا المستودع الرسمي على GitHub). لا يُرسل أي شيء عنك أو عن أجهزة الراوتر الخاصة بك.</string>
+    <string name="trust_extension_index">عند فتح RouterHub أو «استكشاف»، ومرتين يوميًا تقريبًا ما دام التحقق التلقائي من التحديثات مفعّلًا، ينزّل هذا الإصدار قائمة الإضافات من مستودعاتك (افتراضيًا المستودع الرسمي على GitHub). لا يُرسل أي شيء عنك أو عن أجهزة الراوتر الخاصة بك.</string>
+    <string name="auto_updates">التحقق من التحديثات تلقائيًا</string>
+    <string name="auto_updates_summary">يبحث عن إصدارات جديدة من RouterHub وإضافاته مرتين يوميًا تقريبًا</string>
+    <string name="updates_channel">التحديثات</string>
+    <string name="updates_channel_summary">إصدارات جديدة من RouterHub وإضافاته</string>
+    <string name="app_update_title">يتوفر RouterHub %1$s</string>
+    <string name="app_update_text">اضغط لمعرفة الجديد</string>
+    <string name="update_downloading">جارٍ تنزيل RouterHub %1$s</string>
+    <string name="update_downloaded">اكتمل التنزيل</string>
+    <string name="update_downloaded_text">اضغط لتثبيت RouterHub %1$s</string>
+    <string name="update_download_failed">تعذّر تنزيل التحديث</string>
+    <string name="update_download_failed_text">اضغط لفتح صفحة الإصدار</string>
+    <string name="update_wrong_signature">الملف الذي تم تنزيله غير موقّع بمفتاح هذا التطبيق، لذلك لم يُثبَّت</string>
+    <string name="extensions_update_all">تحديث الكل</string>
+    <plurals name="extension_updates_title">
+        <item quantity="zero">لا توجد تحديثات للإضافات</item>
+        <item quantity="one">يتوفر تحديث لإضافة واحدة</item>
+        <item quantity="two">يتوفر تحديثان للإضافات</item>
+        <item quantity="few">تتوفر %d تحديثات للإضافات</item>
+        <item quantity="many">يتوفر %d تحديثًا للإضافات</item>
+        <item quantity="other">يتوفر %d تحديث للإضافات</item>
+    </plurals>
+    <string name="extension_info">معلومات الإضافة</string>
+    <string name="extension_uninstall">إلغاء التثبيت</string>
+    <string name="extension_app_info">معلومات التطبيق</string>
 </resources>

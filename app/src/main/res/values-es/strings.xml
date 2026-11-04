@@ -316,5 +316,26 @@
     <string name="extension_repos_warning">Una extensión se ejecuta dentro de RouterHub y recibe las contraseñas de los routers que la usan. Añade solo repositorios de personas en las que confíes. Instalar desde un repositorio nunca hace que una extensión sea de confianza: si no está firmada con la clave oficial, se te preguntará antes.</string>
     <string name="extension_repos_empty">No hay repositorios. Explorar solo muestra las extensiones ya instaladas.</string>
     <string name="extension_repo_remove">Quitar %1$s</string>
-    <string name="trust_extension_index">Al abrir Explorar, esta versión descarga la lista de extensiones de tus repositorios (por defecto, el oficial en GitHub). No se envía nada sobre ti ni sobre tus routers.</string>
+    <string name="trust_extension_index">Al abrir RouterHub o Explorar, y unas dos veces al día mientras la búsqueda automática de actualizaciones esté activa, esta versión descarga la lista de extensiones de tus repositorios (por defecto, el oficial en GitHub). No se envía nada sobre ti ni sobre tus routers.</string>
+    <string name="auto_updates">Buscar actualizaciones automáticamente</string>
+    <string name="auto_updates_summary">Busca nuevas versiones de RouterHub y sus extensiones unas dos veces al día</string>
+    <string name="updates_channel">Actualizaciones</string>
+    <string name="updates_channel_summary">Nuevas versiones de RouterHub y sus extensiones</string>
+    <string name="app_update_title">RouterHub %1$s está disponible</string>
+    <string name="app_update_text">Toca para ver las novedades</string>
+    <string name="update_downloading">Descargando RouterHub %1$s</string>
+    <string name="update_downloaded">Descarga completa</string>
+    <string name="update_downloaded_text">Toca para instalar RouterHub %1$s</string>
+    <string name="update_download_failed">No se pudo descargar la actualización</string>
+    <string name="update_download_failed_text">Toca para abrir la página de la versión</string>
+    <string name="update_wrong_signature">La descarga no está firmada con la clave de esta app, así que no se instaló</string>
+    <string name="extensions_update_all">Actualizar todas</string>
+    <plurals name="extension_updates_title">
+        <item quantity="one">%d actualización de extensión disponible</item>
+        <item quantity="many">%d actualizaciones de extensiones disponibles</item>
+        <item quantity="other">%d actualizaciones de extensiones disponibles</item>
+    </plurals>
+    <string name="extension_info">Información de la extensión</string>
+    <string name="extension_uninstall">Desinstalar</string>
+    <string name="extension_app_info">Info. de la app</string>
 </resources>

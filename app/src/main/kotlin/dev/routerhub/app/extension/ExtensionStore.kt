@@ -1,15 +1,14 @@
 package dev.routerhub.app.extension
 
-import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.core.content.FileProvider
 import dev.routerhub.api.ExtensionContract
+import dev.routerhub.app.update.ApkInstaller
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -97,15 +96,23 @@ class ExtensionStore(
 
     fun refresh() {
         if (_loading.value) return
+        scope.launch { refreshNow() }
+    }
+
+    /** Reads every repository and returns once done; for the background update check. */
+    suspend fun refreshNow() {
         val urls = repos.urls.value
         _loading.value = true
-        scope.launch {
-            val results = urls.map { url -> async(Dispatchers.IO) { url to runCatching { fetch(url) } } }.awaitAll()
+        try {
+            val results = coroutineScope {
+                urls.map { url -> async(Dispatchers.IO) { url to runCatching { fetch(url) } } }.awaitAll()
+            }
             _available.value = results.flatMap { (_, result) -> result.getOrNull()?.second.orEmpty() }
             _loadedRepos.value = results.mapNotNull { (url, result) -> result.getOrNull()?.let { url to it.first } }.toMap()
             _failedRepos.value = results.filter { (_, result) -> result.isFailure }.map { it.first }
             refreshedFor = urls
             refreshedAt = System.currentTimeMillis()
+        } finally {
             _loading.value = false
         }
     }
@@ -145,6 +152,8 @@ class ExtensionStore(
             }
         }
     }
+
+    fun installAll(extensions: List<AvailableExtension>) = extensions.forEach(::install)
 
     /** Forgets a failed or finished install, so its row shows its button again. */
     fun clear(packageName: String) = _installs.update { it - packageName }
@@ -192,15 +201,7 @@ class ExtensionStore(
     }
 
     private fun startInstaller(apk: File) {
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.extensions", apk)
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, "application/vnd.android.package-archive")
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        try {
-            context.startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
-            throw InstallException(InstallFailure.NO_INSTALLER)
-        }
+        if (!ApkInstaller.install(context, apk)) throw InstallException(InstallFailure.NO_INSTALLER)
     }
 
     private class InstallException(val reason: InstallFailure) : Exception(reason.name)
@@ -208,6 +209,21 @@ class ExtensionStore(
     companion object {
         private const val STALE_MILLIS = 60 * 60 * 1000L
         private const val APK_DIR = "store"
+
+        /** Of each package, the newest version this app can run, or the newest at all when it can run none. */
+        fun offers(available: List<AvailableExtension>): Map<String, AvailableExtension> =
+            available.groupBy { it.packageName }.mapValues { (_, offers) ->
+                offers.filter { it.compatible }.maxByOrNull { it.versionCode } ?: offers.maxBy { it.versionCode }
+            }
+
+        /** The installed extensions a repository has a newer version of that this app can run. */
+        fun updates(installed: List<ExtensionState>, available: List<AvailableExtension>): List<Pair<ExtensionState, AvailableExtension>> {
+            val offers = offers(available)
+            return installed.mapNotNull { state ->
+                val offer = offers[state.info.packageName] ?: return@mapNotNull null
+                if (offer.compatible && offer.versionCode > state.info.versionCode) state to offer else null
+            }
+        }
 
         private val RAW_GITHUB = Regex("""^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$""")
 

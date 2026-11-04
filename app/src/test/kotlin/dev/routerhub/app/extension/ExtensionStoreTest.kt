@@ -63,4 +63,24 @@ class ExtensionStoreTest {
         assertNull(repo.signingKey)
         assertTrue(extensions.isEmpty())
     }
+
+    @Test
+    fun `an update is the newest version this app can run, and only when it is newer`() {
+        val repo = StoreRepo("https://example.org/index.min.json", "Repo", null)
+        fun offer(pkg: String, code: Long, api: Int = 1) =
+            AvailableExtension(repo, pkg, pkg, code, "$code", api, "https://example.org/$pkg.apk", 1, "00")
+        fun installed(pkg: String, code: Long) = ExtensionState.Untrusted(ExtensionInfo(pkg, pkg, "$code", code, 1, emptyList()))
+
+        val available = listOf(
+            offer("a", 2), offer("a", 3), offer("a", 9, api = ExtensionContract.API_VERSION + 1),
+            offer("b", 1),
+            offer("c", 5, api = ExtensionContract.API_VERSION + 1),
+        )
+        val offers = ExtensionStore.offers(available)
+        assertEquals(3L, offers.getValue("a").versionCode)
+        assertFalse(offers.getValue("c").compatible)
+
+        val updates = ExtensionStore.updates(listOf(installed("a", 2), installed("b", 1), installed("c", 1)), available)
+        assertEquals(listOf("a" to 3L), updates.map { it.first.info.packageName to it.second.versionCode })
+    }
 }

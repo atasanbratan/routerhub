@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.routerhub.app.RouterHubApp
 import dev.routerhub.app.alerts.NewDeviceAlerts
 import dev.routerhub.app.ui.lock.LockScreen
+import dev.routerhub.app.update.UpdateChecks
 import dev.routerhub.app.ui.theme.RouterHubTheme
 import dev.routerhub.app.ui.theme.isDark
 
@@ -27,6 +28,8 @@ class MainActivity : ComponentActivity() {
         val container = (application as RouterHubApp).container
         // A new-device notification names the router to open; only on a fresh start, not after rotation.
         val openRouter = intent.getStringExtra(NewDeviceAlerts.EXTRA_ROUTER_ID).takeIf { savedInstanceState == null }
+        // An update notification says what to open: the extension updates, or the new version.
+        val open = intent.getStringExtra(UpdateChecks.EXTRA_OPEN).takeIf { savedInstanceState == null }
         setContent {
             val themeMode by container.preferences.themeMode.collectAsStateWithLifecycle()
             val dynamicColor by container.preferences.dynamicColor.collectAsStateWithLifecycle()
@@ -54,7 +57,7 @@ class MainActivity : ComponentActivity() {
                 Box {
                     // Hidden from screen readers too while locked, not just covered.
                     Box(if (locked) Modifier.clearAndSetSemantics {} else Modifier) {
-                        RouterHubNavHost(container, openRouter)
+                        RouterHubNavHost(container, openRouter, open)
                     }
                     if (locked) {
                         LockScreen(

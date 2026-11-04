@@ -29,8 +29,8 @@ android {
         minSdk = 28 // PackageInfo.signingInfo / GET_SIGNING_CERTIFICATES
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 5
-        versionName = "0.4.0"
+        versionCode = 6
+        versionName = "0.5.0"
         buildConfigField("String", "OFFICIAL_EXTENSION_SIGNERS", "\"$officialSigners\"")
         // Where the About screen looks for updates and links to; forks change it here.
         buildConfigField("String", "GITHUB_REPO", "\"atasanbratan/routerhub\"")

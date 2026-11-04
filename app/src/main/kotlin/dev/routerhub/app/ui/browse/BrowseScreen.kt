@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,6 +69,7 @@ import dev.routerhub.app.R
 import dev.routerhub.app.basic.BasicFactory
 import dev.routerhub.app.extension.AvailableExtension
 import dev.routerhub.app.extension.ExtensionState
+import dev.routerhub.app.extension.ExtensionStore
 import dev.routerhub.app.extension.InstallFailure
 import dev.routerhub.app.extension.InstallStep
 import dev.routerhub.app.extension.TrustLevel
@@ -81,8 +85,22 @@ import dev.routerhub.app.ui.firmwareTitle
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BrowseScreen(container: AppContainer, onAddRouter: (firmwareId: String) -> Unit, onOpenRepos: () -> Unit) {
+fun BrowseScreen(
+    container: AppContainer,
+    onAddRouter: (firmwareId: String) -> Unit,
+    onOpenRepos: () -> Unit,
+    onOpenExtension: (packageName: String) -> Unit,
+    requestedTab: Int? = null,
+    onTabShown: () -> Unit = {},
+) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    // A notification about extension updates opens the Extensions tab.
+    LaunchedEffect(requestedTab) {
+        if (requestedTab != null) {
+            tab = requestedTab
+            onTabShown()
+        }
+    }
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     val extensions by container.extensions.extensions.collectAsStateWithLifecycle()
@@ -143,7 +161,7 @@ fun BrowseScreen(container: AppContainer, onAddRouter: (firmwareId: String) -> U
         val search = query.trim()
         when (tab) {
             0 -> FirmwaresTab(extensions, search, onAddRouter, modifier)
-            else -> ExtensionsTab(container, extensions, search, modifier)
+            else -> ExtensionsTab(container, extensions, search, onOpenExtension, modifier)
         }
     }
 }
@@ -201,7 +219,7 @@ private fun label(state: ExtensionState) = state.info.label.removePrefix("Router
 
 /** [label], with basic mode's translated: it is the app's own, not an extension's. */
 @Composable
-private fun shownLabel(state: ExtensionState) =
+internal fun shownLabel(state: ExtensionState) =
     if (state.info.packageName == BasicFactory.ID) stringResource(R.string.basic_title) else label(state)
 
 @Composable
@@ -262,7 +280,13 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun ExtensionsTab(container: AppContainer, extensions: List<ExtensionState>, query: String, modifier: Modifier) {
+private fun ExtensionsTab(
+    container: AppContainer,
+    extensions: List<ExtensionState>,
+    query: String,
+    onOpenExtension: (String) -> Unit,
+    modifier: Modifier,
+) {
     val store = container.store
     val available by store.available.collectAsStateWithLifecycle()
     val loadedRepos by store.loadedRepos.collectAsStateWithLifecycle()
@@ -270,22 +294,18 @@ private fun ExtensionsTab(container: AppContainer, extensions: List<ExtensionSta
     val loading by store.loading.collectAsStateWithLifecycle()
     val installs by store.installs.collectAsStateWithLifecycle()
 
-    // The newest compatible version of each package; an incompatible one only if that's all there is.
-    val offers = if (STORE) {
-        available.groupBy { it.packageName }.mapValues { (_, offers) ->
-            offers.filter { it.compatible }.maxByOrNull { it.versionCode } ?: offers.maxBy { it.versionCode }
-        }
-    } else {
-        emptyMap()
-    }
+    val offers = if (STORE) ExtensionStore.offers(available) else emptyMap()
     val installedNames = extensions.map { it.info.packageName }.toSet()
     fun ExtensionState.shown() = query.isEmpty() || label(this).matches(query) || info.packageName.matches(query)
     fun AvailableExtension.shown() = query.isEmpty() || name.matches(query) || packageName.matches(query)
 
     val installed = extensions.filter { it.shown() }
-    val updates = installed.mapNotNull { state ->
-        val offer = offers[state.info.packageName] ?: return@mapNotNull null
-        if (offer.compatible && offer.versionCode > state.info.versionCode) state to offer else null
+    val updates = if (STORE) ExtensionStore.updates(installed, available) else emptyList()
+    val updating = updates.map { it.first.info.packageName }.toSet()
+    // Updates arrive after the list is first drawn: bring their heading into view while at the top.
+    val listState = rememberLazyListState()
+    LaunchedEffect(updates.isNotEmpty()) {
+        if (updates.isNotEmpty() && listState.firstVisibleItemIndex <= 1) listState.scrollToItem(0)
     }
     val notInstalled = offers.values.filter { it.packageName !in installedNames && it.shown() }.sortedBy { it.name.lowercase() }
     val showRepoName = loadedRepos.size > 1
@@ -294,9 +314,19 @@ private fun ExtensionsTab(container: AppContainer, extensions: List<ExtensionSta
         EmptyScreen(stringResource(if (query.isEmpty()) R.string.no_extensions else R.string.no_search_results, query), modifier)
         return
     }
-    LazyColumn(modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(modifier, state = listState, contentPadding = PaddingValues(bottom = 16.dp)) {
         if (updates.isNotEmpty()) {
-            item(key = "updates") { SectionTitle(stringResource(R.string.extensions_updates)) }
+            item(key = "updates") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) { SectionTitle(stringResource(R.string.extensions_updates)) }
+                    if (updates.size > 1) {
+                        TextButton(
+                            onClick = { store.installAll(updates.map { it.second }) },
+                            modifier = Modifier.padding(end = 8.dp, top = 8.dp),
+                        ) { Text(stringResource(R.string.extensions_update_all)) }
+                    }
+                }
+            }
             items(updates, key = { "update:${it.first.info.packageName}" }) { (state, offer) ->
                 StoreRow(
                     title = label(state),
@@ -307,10 +337,12 @@ private fun ExtensionsTab(container: AppContainer, extensions: List<ExtensionSta
                 )
             }
         }
-        if (installed.isNotEmpty()) {
+        // As in Mihon, an extension with an update is listed under Updates only.
+        val upToDate = installed.filter { it.info.packageName !in updating }
+        if (upToDate.isNotEmpty()) {
             if (STORE) item(key = "installed") { SectionTitle(stringResource(R.string.extensions_installed)) }
-            items(installed, key = { it.info.packageName }) { state ->
-                InstalledRow(state, onTrust = container.extensions::trust)
+            items(upToDate, key = { it.info.packageName }) { state ->
+                InstalledRow(state, onTrust = container.extensions::trust, onOpen = onOpenExtension)
             }
         }
         if (STORE) storeSection(notInstalled, failedRepos, loadedRepos.keys, loading, installs, showRepoName, onInstall = store::install)
@@ -399,7 +431,7 @@ private fun StoreRow(
 }
 
 @Composable
-private fun InstalledRow(state: ExtensionState, onTrust: (ExtensionState.Untrusted) -> Unit) {
+private fun InstalledRow(state: ExtensionState, onTrust: (ExtensionState.Untrusted) -> Unit, onOpen: (String) -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -431,11 +463,17 @@ private fun InstalledRow(state: ExtensionState, onTrust: (ExtensionState.Untrust
                 state.factories.map { it.protocol }.distinct().forEach { ProtocolBadge(it) }
             }
         }
+        // Mihon's extension gear. Built-in extensions are part of the app: nothing to uninstall.
+        if (!(state is ExtensionState.Loaded && state.trust == TrustLevel.BUILT_IN)) {
+            IconButton(onClick = { onOpen(state.info.packageName) }) {
+                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.extension_info))
+            }
+        }
     }
 }
 
 @Composable
-private fun statusLine(state: ExtensionState): String = when (state) {
+internal fun statusLine(state: ExtensionState): String = when (state) {
     is ExtensionState.Loaded -> when (state.trust) {
         TrustLevel.OFFICIAL -> stringResource(R.string.trust_official)
         TrustLevel.DEVELOPMENT -> stringResource(R.string.trust_development)

@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import dev.routerhub.api.ExtensionContract
+import dev.routerhub.app.AppContainer
 import dev.routerhub.app.BuildConfig
 import dev.routerhub.app.R
 import dev.routerhub.app.ui.components.RouterCover
@@ -68,7 +69,7 @@ private const val PRIVACY_URL = "${BuildConfig.WEBSITE_URL}/privacy"
 /** Mihon's About: a logo, version, update check, what's new, licenses, privacy policy, then link icons. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
+fun AboutScreen(container: AppContainer, onBack: () -> Unit, onOpenLicenses: () -> Unit) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
@@ -162,7 +163,7 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
         NewUpdateDialog(
             release = release,
             onDownload = {
-                uriHandler.openUri(release.downloadUrl)
+                container.appUpdates.download(release)
                 newRelease = null
             },
             onOpenRelease = { uriHandler.openUri(release.releaseUrl) },
@@ -188,7 +189,7 @@ private fun AboutItem(
 }
 
 @Composable
-private fun NewUpdateDialog(release: AppRelease, onDownload: () -> Unit, onOpenRelease: () -> Unit, onDismiss: () -> Unit) {
+internal fun NewUpdateDialog(release: AppRelease, onDownload: () -> Unit, onOpenRelease: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.new_version)) },
