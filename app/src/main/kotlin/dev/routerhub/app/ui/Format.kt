@@ -9,10 +9,12 @@ import dev.routerhub.api.FirmwareParseException
 import dev.routerhub.api.FirmwareTimeoutException
 import dev.routerhub.api.InvalidSettingException
 import dev.routerhub.api.RouterBusyException
+import dev.routerhub.api.RouterFirmwareFactory
 import dev.routerhub.api.RouterUnreachableException
 import dev.routerhub.api.SshHostKeyMismatchException
 import dev.routerhub.api.WrongCredentialsException
 import dev.routerhub.app.R
+import dev.routerhub.app.basic.BasicFactory
 import dev.routerhub.app.engine.ExtensionFailureException
 
 @Composable
@@ -49,3 +51,16 @@ fun friendlyError(context: Context, error: Throwable): String = when (error) {
     is ExtensionFailureException -> error.message ?: context.getString(R.string.error_extension)
     else -> error.message ?: error::class.java.simpleName
 }
+
+/** The name of [factory], vendor first unless the name already starts with it. Basic mode is the app's own, so its name is translated. */
+@Composable
+fun firmwareTitle(factory: RouterFirmwareFactory): String = when {
+    factory.id == BasicFactory.ID -> stringResource(R.string.basic_name)
+    factory.displayName.startsWith(factory.vendor) -> factory.displayName
+    else -> "${factory.vendor} ${factory.displayName}"
+}
+
+/** [RouterFirmwareFactory.vendor], translated for basic mode. */
+@Composable
+fun firmwareVendor(factory: RouterFirmwareFactory): String =
+    if (factory.id == BasicFactory.ID) stringResource(R.string.basic_vendor) else factory.vendor

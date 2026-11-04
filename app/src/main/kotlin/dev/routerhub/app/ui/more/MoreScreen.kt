@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,7 +61,7 @@ import kotlinx.coroutines.launch
 
 /** Mihon-style "More": a logo header, then a flat list of settings. */
 @Composable
-fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: () -> Unit) {
+fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: () -> Unit, onOpenRepos: () -> Unit) {
     val prefs = container.preferences
     val themeMode by prefs.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by prefs.dynamicColor.collectAsStateWithLifecycle()
@@ -154,6 +155,16 @@ fun MoreScreen(container: AppContainer, onOpenAbout: () -> Unit, onOpenTrust: ()
                 leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null) },
                 modifier = Modifier.clickable { importFile.launch(arrayOf("application/json", "application/octet-stream")) },
             )
+            if (BuildConfig.INSTALLABLE_EXTENSIONS) {
+                HorizontalDivider()
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = { Text(stringResource(R.string.extension_repos)) },
+                    supportingContent = { Text(stringResource(R.string.extension_repos_summary)) },
+                    leadingContent = { Icon(Icons.Outlined.Storefront, contentDescription = null) },
+                    modifier = Modifier.clickable(onClick = onOpenRepos),
+                )
+            }
             HorizontalDivider()
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),

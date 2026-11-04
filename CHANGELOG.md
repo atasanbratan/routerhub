@@ -10,6 +10,26 @@ Add them under **Unreleased** as you go; releasing renames that heading to the n
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-04
+
+### Added
+
+- **Extension store:** Browse, Extensions lists the extensions you can install and the updates for the
+  ones you have, and installs them with a tap through Android's installer. A download is checked against
+  the repository's checksum and signing key first, and an extension still needs your trust as before if
+  it isn't signed with the official key. Only in the GitHub version: on Google Play the official
+  extensions are already built in.
+- **Extension repositories,** as in Mihon: the official one is set by default, and you can add others by
+  the link to their `index.min.json`, or remove them. Where `raw.githubusercontent.com` is blocked, the
+  store reads the official repository through the jsDelivr mirror.
+- **Search** in Browse, for router types and extensions.
+
+### Fixed
+
+- "Any router (basic mode)" and its Browse heading are translated in every language.
+- Russian: a new-device alert for 21, 31… devices now shows the number, and several phrases read more
+  naturally.
+
 ## [0.3.0] - 2026-11-03
 
 ### Added

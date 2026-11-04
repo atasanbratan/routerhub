@@ -60,6 +60,8 @@ import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.LoginHelpDialog
 import dev.routerhub.app.ui.components.ProtocolBadge
 import dev.routerhub.app.ui.components.RouterCover
+import dev.routerhub.app.ui.firmwareTitle
+import dev.routerhub.app.ui.firmwareVendor
 import java.util.UUID
 
 /**
@@ -177,8 +179,8 @@ private fun FirmwarePicker(factories: List<RouterFirmwareFactory>, onPick: (Rout
             ) {
                 RouterCover(size = 40.dp)
                 Column(Modifier.weight(1f)) {
-                    Text(factory.displayName, style = MaterialTheme.typography.bodyLarge)
-                    Text(factory.vendor, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (factory.id == BasicFactory.ID) firmwareTitle(factory) else factory.displayName, style = MaterialTheme.typography.bodyLarge)
+                    Text(firmwareVendor(factory), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 ProtocolBadge(factory.protocol)
             }
@@ -194,7 +196,7 @@ private fun ConnectionForm(
     modifier: Modifier,
     onSave: (RouterProfile) -> Unit,
 ) {
-    val title = if (factory.displayName.startsWith(factory.vendor)) factory.displayName else "${factory.vendor} ${factory.displayName}"
+    val title = firmwareTitle(factory)
     var name by rememberSaveable { mutableStateOf(existing?.name ?: title) }
     var host by rememberSaveable { mutableStateOf(existing?.host ?: foundHost ?: DEFAULT_ADDRESS) }
     LaunchedEffect(foundHost) {

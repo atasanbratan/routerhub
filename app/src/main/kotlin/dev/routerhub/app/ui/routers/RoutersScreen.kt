@@ -37,6 +37,7 @@ import dev.routerhub.app.data.RouterProfile
 import dev.routerhub.app.ui.components.EmptyScreen
 import dev.routerhub.app.ui.components.ProtocolBadge
 import dev.routerhub.app.ui.components.RouterCover
+import dev.routerhub.app.ui.firmwareTitle
 
 /** The "library": every saved router, Mihon-style list with cover tiles. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,7 +102,7 @@ private fun RouterListItem(profile: RouterProfile, factory: RouterFirmwareFactor
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(profile.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                factory?.let { "${it.vendor} ${it.displayName}" } ?: stringResource(R.string.extension_not_installed),
+                factory?.let { firmwareTitle(it) } ?: stringResource(R.string.extension_not_installed),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (factory == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,

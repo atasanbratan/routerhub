@@ -134,6 +134,7 @@ import dev.routerhub.app.ui.components.ProtocolBadge
 import dev.routerhub.app.ui.components.RouterCover
 import dev.routerhub.app.ui.components.SectionHeader
 import dev.routerhub.app.ui.components.StatusDot
+import dev.routerhub.app.ui.firmwareTitle
 import dev.routerhub.app.ui.formatDb
 import dev.routerhub.app.ui.formatKbps
 import dev.routerhub.app.ui.formatUptime
@@ -242,8 +243,7 @@ fun RouterDetailScreen(
                             item {
                                 Header(
                                     name = profile.name,
-                                    firmware = if (factory.displayName.startsWith(factory.vendor)) factory.displayName
-                                    else "${factory.vendor} ${factory.displayName}",
+                                    firmware = firmwareTitle(factory),
                                     protocol = profile.protocol,
                                     address = "${profile.host}:${profile.port}",
                                     online = when {

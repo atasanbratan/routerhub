@@ -204,7 +204,7 @@ vulnerability privately through [SECURITY.md](SECURITY.md).
 ## Roadmap
 
 - [x] Signed releases ([how releasing works](docs/releasing.md)) and a website with the extension list
-- [ ] An in-app extension index, so installing one is a tap
+- [x] An in-app extension store with repositories, so installing one is a tap
 - [ ] More pages for the TP-Link extension: QoS, IPTV, ALG, DNS, backup and restore
 - [ ] A Wi-Fi schedule grid editor, and advanced radio settings (needs careful hardware testing)
 - [x] Translations: Spanish, Portuguese, Indonesian, Russian and Arabic (native speakers welcome to review)

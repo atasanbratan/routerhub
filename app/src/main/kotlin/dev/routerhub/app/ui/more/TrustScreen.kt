@@ -63,6 +63,7 @@ fun TrustScreen(onBack: () -> Unit) {
                     R.string.trust_permissions,
                     R.string.trust_no_ads,
                     if (BuildConfig.UPDATE_CHECKER) R.string.trust_update_check else null,
+                    if (BuildConfig.INSTALLABLE_EXTENSIONS) R.string.trust_extension_index else null,
                 ),
             )
             SectionHeader(stringResource(R.string.tested_routers))

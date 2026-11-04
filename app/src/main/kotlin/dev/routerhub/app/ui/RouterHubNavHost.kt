@@ -32,6 +32,7 @@ import dev.routerhub.app.AppContainer
 import dev.routerhub.app.R
 import dev.routerhub.app.ui.add.AddRouterScreen
 import dev.routerhub.app.ui.browse.BrowseScreen
+import dev.routerhub.app.ui.browse.ExtensionReposScreen
 import dev.routerhub.app.ui.more.AboutScreen
 import dev.routerhub.app.ui.more.LicensesScreen
 import dev.routerhub.app.ui.more.MoreScreen
@@ -54,6 +55,7 @@ private object Routes {
     const val ABOUT = "about"
     const val LICENSES = "about/licenses"
     const val TRUST = "more/trust"
+    const val REPOS = "browse/repos"
     fun router(id: String) = "router/$id"
     fun settings(id: String, page: String) = "router/$id/settings/$page"
     fun edit(id: String) = "edit/$id"
@@ -113,14 +115,22 @@ fun RouterHubNavHost(container: AppContainer, openRouter: String? = null) {
                 )
             }
             composable(TopLevel.BROWSE.route) {
-                BrowseScreen(container = container, onAddRouter = { navController.navigate(Routes.add(it)) })
+                BrowseScreen(
+                    container = container,
+                    onAddRouter = { navController.navigate(Routes.add(it)) },
+                    onOpenRepos = { navController.navigate(Routes.REPOS) },
+                )
             }
             composable(TopLevel.MORE.route) {
                 MoreScreen(
                     container = container,
                     onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     onOpenTrust = { navController.navigate(Routes.TRUST) },
+                    onOpenRepos = { navController.navigate(Routes.REPOS) },
                 )
+            }
+            composable(Routes.REPOS) {
+                ExtensionReposScreen(container = container, onBack = { navController.popBackStack() })
             }
             composable(Routes.TRUST) {
                 TrustScreen(onBack = { navController.popBackStack() })

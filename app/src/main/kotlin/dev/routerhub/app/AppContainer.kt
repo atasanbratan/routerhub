@@ -6,6 +6,8 @@ import dev.routerhub.app.data.RouterRepository
 import dev.routerhub.app.data.SecretCipher
 import dev.routerhub.app.engine.SessionManager
 import dev.routerhub.app.extension.ExtensionManager
+import dev.routerhub.app.extension.ExtensionRepos
+import dev.routerhub.app.extension.ExtensionStore
 import dev.routerhub.app.ui.lock.AppLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,6 +21,10 @@ class AppContainer(context: Context, scope: CoroutineScope) {
     val routerChanges = MutableSharedFlow<String>(extraBufferCapacity = 8)
 
     val extensions: ExtensionManager = ExtensionManager.create(context, scope).also { it.start() }
+    val extensionRepos = ExtensionRepos(context)
+
+    /** Only builds that can install extensions read the repositories; the Play build never does. */
+    val store = ExtensionStore(context.applicationContext, extensionRepos, scope)
     val routers = RouterRepository(context, SecretCipher())
     val sessions = SessionManager(scope)
     val preferences = AppPreferences(context)
